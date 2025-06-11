@@ -1,77 +1,45 @@
-// frontend/lib/api.ts
+// frontend/app/components/CategoryFilter.tsx
+'use client'
 
-// Базовый URL Strapi из .env.local
-const API_URL = process.env.STRAPI_URL || 'http://localhost:1337'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useState, useEffect } from 'react'
 
-export type Product = {
-  id: number
-  title: string
-  price: number
-  imageUrl: string
-  categorySlug: string
-}
+export default function CategoryFilter() {
+  const router = useRouter()
+  const params = useSearchParams()
 
-// Параметры фильтрации
-interface Filters {
-  price?: string
-}
+  // Пример только для price
+  const [price, setPrice] = useState(params.get('price') || '10000')
 
-/**
- * Преобразует entry из Strapi v5
- * в плоский объект Product
- */
-function flattenEntry(entry: any): Product {
-  const imgArray = Array.isArray(entry.image) ? entry.image : []
-  const img = imgArray[0] ?? null
+  useEffect(() => {
+    const q = new URLSearchParams()
+    if (price) q.set('price', price)
+    router.push(`?${q.toString()}`)
+  }, [price, router])
 
-  return {
-    id: entry.id,
-    title: entry.title ?? '',
-    price: entry.price ?? 0,
-    imageUrl: img?.url ? `${API_URL}${img.url}` : '/placeholder.jpg',
-    categorySlug: entry.category?.slug ?? '',
-  }
-}
-
-/**
- * Вернёт _все_ продукты без фильтра по категории
- */
-export async function getAllProducts(): Promise<Product[]> {
-  const res = await fetch(`${API_URL}/api/products?populate=*`, {
-    cache: 'no-store',
-  })
-  const json = await res.json()
-  if (!json.data || !Array.isArray(json.data)) return []
-  return json.data.map(flattenEntry)
-}
-
-/**
- * Вернёт продукты по заданному slug категории и (опционально) по цене
- *
- * @param slug — строковый slug категории
- * @param filters.price — максимальная цена
- */
-export async function getProductsByCategory(
-  slug: string,
-  filters: Filters = {}
-): Promise<Product[]> {
-  const qs = new URLSearchParams()
-
-  // Обязательно фильтруем по slug категории
-  qs.set('filters[category][slug][$eq]', slug)
-
-  // Фильтр по цене, если передали
-  if (filters.price) {
-    qs.set('filters[price][$lte]', filters.price)
+  const reset = () => {
+    setPrice('10000')
+    router.push('?')
   }
 
-  // Подгружаем связи (image и category)
-  qs.set('populate', '*')
-
-  const res = await fetch(`${API_URL}/api/products?${qs.toString()}`, {
-    cache: 'no-store',
-  })
-  const json = await res.json()
-  if (!json.data || !Array.isArray(json.data)) return []
-  return json.data.map(flattenEntry)
+  return (
+    <div className="border rounded-lg p-4 mb-6 bg-white shadow">
+      <h2 className="text-lg font-semibold mb-4">Фильтры</h2>
+      <div className="mb-4">
+        <label className="block mb-1">Макс. цена: {price} сом</label>
+        <input
+          type="range"
+          min="0"
+          max="20000"
+          step="500"
+          value={price}
+          onChange={(e) => setPrice(e.target.value)}
+          className="w-full"
+        />
+      </div>
+      <button onClick={reset} className="px-4 py-2 bg-gray-200 rounded">
+        Сбросить
+      </button>
+    </div>
+  )
 }

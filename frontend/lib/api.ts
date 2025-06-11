@@ -1,64 +1,117 @@
-// frontend/lib/api.ts
-
 const API_URL = process.env.STRAPI_URL || 'http://localhost:1337'
 
+/** Простая модель продукта */
 export type Product = {
   id: number
+  slug: string
   title: string
   price: number
   imageUrl: string
   categorySlug: string
+  description: any[]    // ← raw description из Strapi
 }
 
-interface Filters {
+/** Простая модель категории */
+export type Category = {
+  name: string
+  slug: string
+}
+
+/** Параметры фильтрации при запросе продуктов */
+interface ProductFilters {
   price?: string
 }
 
 /**
- * Флаттенит entry Strapi v5 в объект Product
+ * Вспомогательная функция: плоско мапит entry Strapi v5 → Product
  */
-function flattenEntry(entry: any): Product {
-  const imgArray = Array.isArray(entry.image) ? entry.image : []
-  const img = imgArray[0] ?? null
+function flattenProduct(entry: any): Product {
+  const imgArr = Array.isArray(entry.image) ? entry.image : []
+  const img = imgArr[0] ?? null
 
   return {
     id: entry.id,
+    slug: entry.slug,
     title: entry.title ?? '',
     price: entry.price ?? 0,
     imageUrl: img?.url ? `${API_URL}${img.url}` : '/placeholder.jpg',
     categorySlug: entry.category?.slug ?? '',
+    description: entry.description ?? [],
   }
 }
 
 /**
- * Вернёт все продукты
+ * Получить все продукты (без фильтров)
  */
 export async function getAllProducts(): Promise<Product[]> {
-  const res = await fetch(`${API_URL}/api/products?populate=*`, { cache: 'no-store' })
+  const res = await fetch(`${API_URL}/api/products?populate=*`, {
+    cache: 'no-store',
+  })
   const json = await res.json()
   if (!json.data || !Array.isArray(json.data)) return []
-  return json.data.map(flattenEntry)
+  return json.data.map(flattenProduct)
 }
 
 /**
- * Вернёт продукты по category-slug и (опционально) по цене
+ * Получить продукты по slug категории и (опционально) по цене
+ * @param slug slug категории
+ * @param filters.price максимальная цена
  */
 export async function getProductsByCategory(
   slug: string,
-  filters: Filters = {}
+  filters: ProductFilters = {}
 ): Promise<Product[]> {
   const qs = new URLSearchParams()
-  // фильтруем по переданному slug
   qs.set('filters[category][slug][$eq]', slug)
-  // фильтр по цене, если передали
   if (filters.price) {
     qs.set('filters[price][$lte]', filters.price)
   }
-  // подгружаем все связи
   qs.set('populate', '*')
 
-  const res = await fetch(`${API_URL}/api/products?${qs.toString()}`, { cache: 'no-store' })
+  const res = await fetch(`${API_URL}/api/products?${qs}`, {
+    cache: 'no-store',
+  })
   const json = await res.json()
   if (!json.data || !Array.isArray(json.data)) return []
-  return json.data.map(flattenEntry)
+  return json.data.map(flattenProduct)
+}
+
+/**
+ * Поиск продуктов по части названия (регистронезависимо)
+ * @param query строка поиска
+ */
+export async function getProductsBySearch(query: string): Promise<Product[]> {
+  const qs = new URLSearchParams()
+  qs.set('filters[title][$containsi]', query)
+  qs.set('populate', '*')
+
+  const res = await fetch(`${API_URL}/api/products?${qs.toString()}`, {
+    cache: 'no-store',
+  })
+  const json = await res.json()
+  if (!json.data || !Array.isArray(json.data)) return []
+  return json.data.map(flattenProduct)
+}
+
+/**
+ * Получить один продукт по slug (берёт первый из списка)
+ */
+export async function getProductBySlug(slug: string): Promise<Product | null> {
+  const products = await getProductsByCategory(slug)
+  return products.length > 0 ? products[0] : null
+}
+
+/**
+ * Получить все категории
+ */
+export async function getAllCategories(): Promise<Category[]> {
+  const res = await fetch(`${API_URL}/api/categories?populate=*`, {
+    cache: 'no-store',
+  })
+  const json = await res.json()
+  if (!json.data || !Array.isArray(json.data)) return []
+  return json.data.map((entry: any) => ({
+    name: entry.name,
+    slug: entry.slug,
+  }))
 }

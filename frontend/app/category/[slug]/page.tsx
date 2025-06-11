@@ -1,10 +1,18 @@
 // frontend/app/category/[slug]/page.tsx
 export const dynamic = 'force-dynamic'
 
+import Link from 'next/link'
 import React from 'react'
-import { getProductsByCategory, Product } from '../../../lib/api'
+import {
+  getProductsByCategory,
+  getAllCategories,
+  getProductBySlug,
+  Product,
+  Category,
+} from '../../../lib/api'
 import ProductCard from '../../../app/components/ProductCard'
 import CategoryFilter from '../../../app/components/CategoryFilter'
+
 
 interface CategoryPageProps {
   params: { slug: string }
@@ -17,13 +25,17 @@ export default async function CategoryPage({
 }: CategoryPageProps) {
   const slug = params.slug
 
-  const filters = {
-    category: slug, // фильтруем по текущему слагу
-    price: typeof searchParams.price === 'string' ? searchParams.price : undefined,
-  }
+  // Извлекаем price из URL
+  const rawPrice = Array.isArray(searchParams.price)
+    ? searchParams.price[0]
+    : searchParams.price
 
-  const products = await getProductsByCategory(slug, { price: filters.price })
+  const priceFilter = typeof rawPrice === 'string' ? rawPrice : undefined
 
+  // Получаем продукты, передаём slug и фильтр по цене
+  const products: Product[] = await getProductsByCategory(slug, {
+    price: priceFilter,
+  })
 
   return (
     <main className="container mx-auto px-4 py-8">
@@ -40,12 +52,17 @@ export default async function CategoryPage({
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
           {products.map((product) => (
-            <ProductCard
+            <Link
               key={product.id}
-              title={product.title}
-              price={product.price}
-              image={product.imageUrl}
-            />
+              href={`/product/${product.slug}`}
+              className="block"
+            >
+              <ProductCard
+                title={product.title}
+                price={product.price}
+                image={product.imageUrl}
+              />
+            </Link>
           ))}
         </div>
       )}

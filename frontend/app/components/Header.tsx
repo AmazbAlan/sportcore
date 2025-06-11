@@ -1,29 +1,45 @@
 'use client'
 
 import Link from 'next/link'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { FaHeart, FaShoppingBasket, FaSearch } from 'react-icons/fa'
 
 export default function Header() {
+  const [searchTerm, setSearchTerm] = useState('')
+  const router = useRouter()
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    const q = searchTerm.trim()
+    if (q) {
+      router.push(`/search?query=${encodeURIComponent(q)}`)
+    }
+  }
+
   return (
     <header className="bg-[#1a1f4b] text-white shadow-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
         {/* Логотип */}
         <Link href="/" className="text-2xl font-bold text-yellow-400 flex items-center gap-2">
-          {/* <img src="/logo.svg" alt="Sportcore" className="h-8" /> */}
           SPORTCORE
         </Link>
 
-        {/* Поиск */}
-        <div className="flex-1 max-w-xl">
+        {/* Форма поиска */}
+        <form onSubmit={handleSearch} className="flex-1 max-w-xl">
           <div className="flex items-center bg-white rounded-md px-3 py-2">
-          <input
-                type="text"
-                placeholder="Поиск товаров или брендов..."
-                className="flex-1 text-black outline-none"
-              />
-            <FaSearch className="text-gray-600" />
+            <input
+              type="text"
+              placeholder="Поиск товаров или брендов..."
+              className="flex-1 text-black outline-none"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+            />
+            <button type="submit" className="pl-2">
+              <FaSearch className="text-gray-600" />
+            </button>
           </div>
-        </div>
+        </form>
 
         {/* Иконки */}
         <div className="flex items-center gap-6 text-sm">
@@ -44,5 +60,5 @@ export default function Header() {
         </div>
       </nav>
     </header>
-  )
+)
 }
