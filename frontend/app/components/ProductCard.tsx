@@ -1,38 +1,40 @@
-'use client'
-
+// frontend/app/components/ProductCard.tsx
+import Link from 'next/link'
 import Image from 'next/image'
 
 interface ProductCardProps {
+  slug: string
   title: string
-  price: number
+  price?: number      
   image: string
-  rating?: number
-  reviews?: number
+  href?: string
 }
 
 export default function ProductCard({
+  slug,
   title,
-  price,
+  price = 0,          
   image,
-  rating = 4,
-  reviews = 10,
+  href,
 }: ProductCardProps) {
+  const linkHref = href ?? `/product/${slug}`
+
   return (
-    <div className="bg-white rounded shadow hover:shadow-lg transition p-4 text-center">
-      <div className="w-full h-52 relative mb-4">
-        <Image
-          src={image}
-          alt={title}
-          fill
-          className="object-contain"
-        />
+    <Link
+      href={linkHref}
+      className="group block bg-white rounded shadow transition-transform transform hover:shadow-lg hover:scale-105"
+    >
+      <div className="relative w-full h-52 mb-4">
+        <Image src={image} alt={title} fill className="object-contain" />
       </div>
-      <h3 className="text-sm font-medium mb-2">{title}</h3>
-      <div className="text-yellow-400 text-sm mb-1">
-        {'★'.repeat(rating)}{'☆'.repeat(5 - rating)}{' '}
-        <span className="text-gray-500 text-xs">({reviews})</span>
+      <div className="px-4 pb-4 text-center">
+        <h3 className="font-medium mb-2 text-[#1a1f4b] group-hover:text-black transition-colors">
+          {title}
+        </h3>
+        <p className="font-bold text-[#1a1f4b] group-hover:text-black transition-colors">
+          {price.toLocaleString()} сом
+        </p>
       </div>
-      <div className="font-semibold">{price} сом</div>
-    </div>
+    </Link>
   )
 }

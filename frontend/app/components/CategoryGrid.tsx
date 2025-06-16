@@ -1,19 +1,35 @@
+// frontend/app/components/CategoryGrid.tsx
 import CategoryCard from './CategoryCard'
+import { getBannerCategories } from '../../lib/api'
 
-const categories = [
-  { title: 'Clothing', image: '/cat1.jpg', href: '/category/clothing' },
-  { title: 'Footwear', image: '/cat2.jpg', href: '/category/footwear' },
-  { title: 'Equipment', image: '/cat3.jpg', href: '/category/equipment' },
-  { title: 'Mens Clothing', image: '/cat4.jpg', href: '/category/mens', buttonText: 'Shop Mens' },
-  { title: 'Womens Clothing', image: '/cat5.jpg', href: '/category/womens', buttonText: 'Shop Womens' }
-]
+export default async function CategoryGrid() {
+  const cats = await getBannerCategories()
+  const topRow    = cats.slice(0, 3)
+  const bottomRow = cats.slice(3, 5)
 
-export default function CategoryGrid() {
   return (
-    <section className="max-w-7xl mx-auto px-4 py-16">
+    <section className="max-w-7xl mx-auto px-4 py-16 space-y-6">
+      {/* 3 карточки сверху */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {categories.map((cat, idx) => (
-          <CategoryCard key={idx} {...cat} />
+        {topRow.map((cat) => (
+          <CategoryCard
+            key={cat.slug}
+            title={cat.name}
+            image={cat.imageUrl}
+            href={`/category/${cat.slug}`}
+          />
+        ))}
+      </div>
+
+      {/* 2 карточки снизу */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        {bottomRow.map((cat) => (
+          <CategoryCard
+            key={cat.slug}
+            title={cat.name}
+            image={cat.imageUrl}
+            href={`/category/${cat.slug}`}
+          />
         ))}
       </div>
     </section>

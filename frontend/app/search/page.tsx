@@ -1,8 +1,9 @@
-// app/search/page.tsx
+// frontend/app/search/page.tsx
 import React from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { getProductsBySearch, Product } from '../../lib/api'
+// заменили getProductsBySearch на searchProducts
+import { searchProducts, Product } from '../../lib/api'
 
 interface SearchPageProps {
   searchParams: { query?: string }
@@ -21,7 +22,8 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     )
   }
 
-  const products: Product[] = await getProductsBySearch(query)
+  // теперь вызываем правильную функцию
+  const products: Product[] = await searchProducts(query)
 
   return (
     <main className="container mx-auto px-4 py-8">
@@ -45,11 +47,12 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                   alt={prod.title}
                   fill
                   className="object-cover"
+                  priority
                 />
               </div>
               <div className="p-4">
                 <h2 className="font-medium">{prod.title}</h2>
-                <p className="mt-2 font-bold">{prod.price} ₸</p>
+                <p className="mt-2 font-bold">{prod.price} сом</p>
               </div>
             </Link>
           ))}

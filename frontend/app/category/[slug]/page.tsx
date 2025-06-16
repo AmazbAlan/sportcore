@@ -1,21 +1,14 @@
 // frontend/app/category/[slug]/page.tsx
 export const dynamic = 'force-dynamic'
 
-import Link from 'next/link'
 import React from 'react'
-import {
-  getProductsByCategory,
-  getAllCategories,
-  getProductBySlug,
-  Product,
-  Category,
-} from '../../../lib/api'
-import ProductCard from '../../../app/components/ProductCard'
-import CategoryFilter from '../../../app/components/CategoryFilter'
-
+import ProductCard from '../../components/ProductCard'
+import CategoryFilter from '../../components/CategoryFilter'
+// Вместо getAllProducts теперь используем оптимизированный эндпоинт
+import { getProductsByCategory } from '../../../lib/api'
 
 interface CategoryPageProps {
-  params: { slug: string }
+  params:       { slug: string }
   searchParams: Record<string, string | string[] | undefined>
 }
 
@@ -25,25 +18,31 @@ export default async function CategoryPage({
 }: CategoryPageProps) {
   const slug = params.slug
 
-  // Извлекаем price из URL
-  const rawPrice = Array.isArray(searchParams.price)
-    ? searchParams.price[0]
-    : searchParams.price
+  // Извлекаем из URL фильтры
+  const rawPrice  = Array.isArray(searchParams.price)  ? searchParams.price[0]  : searchParams.price
+  const rawSearch = Array.isArray(searchParams.search) ? searchParams.search[0] : searchParams.search
 
-  const priceFilter = typeof rawPrice === 'string' ? rawPrice : undefined
+  const maxPrice = rawPrice  ? Number(rawPrice) : undefined
+  const search   = rawSearch ? rawSearch.toLowerCase() : undefined
 
-  // Получаем продукты, передаём slug и фильтр по цене
-  const products: Product[] = await getProductsByCategory(slug, {
-    price: priceFilter,
-  })
+  // Запрашиваем сразу отфильтрованные по категории (и опционально по цене) товары
+  const productsByCategory = await getProductsByCategory(slug, maxPrice)
+
+  // Если есть поисковый запрос — дополнительно фильтруем по title
+  const products = search
+    ? productsByCategory.filter((p) =>
+        p.title.toLowerCase().includes(search)
+      )
+    : productsByCategory
 
   return (
-    <main className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6 capitalize">
+    <main className="container mx-auto px-4 py-8 space-y-6">
+      <h1 className="text-3xl font-bold capitalize">
         {decodeURIComponent(slug)}
       </h1>
 
-      <CategoryFilter />
+      {/* Форма фильтра обновляет URL: передаёт price и search */}
+      <CategoryFilter categorySlug={slug} />
 
       {products.length === 0 ? (
         <p className="text-gray-500">
@@ -51,18 +50,14 @@ export default async function CategoryPage({
         </p>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-          {products.map((product) => (
-            <Link
-              key={product.id}
-              href={`/product/${product.slug}`}
-              className="block"
-            >
-              <ProductCard
-                title={product.title}
-                price={product.price}
-                image={product.imageUrl}
-              />
-            </Link>
+          {products.map((p) => (
+            <ProductCard
+              key={p.id}
+              slug={p.slug}
+              title={p.title}
+              price={p.price}
+              image={p.imageUrl}
+            />
           ))}
         </div>
       )}
