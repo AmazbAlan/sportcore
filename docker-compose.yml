@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: sportcore_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: strapi
+      POSTGRES_PASSWORD: strapi_pass
+      POSTGRES_DB: strapi_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  strapi:
+    build:
+      context: ./backend       # <–– ВАЖНО: build должен быть объектом, не просто строкой
+    container_name: sportcore_strapi
+    restart: always
+    env_file:
+      - ./backend/.env
+    ports:
+      - "1337:1337"
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
