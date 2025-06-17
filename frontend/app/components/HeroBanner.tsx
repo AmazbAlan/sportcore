@@ -15,7 +15,7 @@ export default function HeroBanner() {
       <div className="absolute inset-0 bg-blue-500 mix-blend-overlay opacity-40 pointer-events-none" />
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
         <h1 className="text-5xl sm:text-5xl font-extrabold text-yellow-400 drop-shadow-lg">
-          Добро пожаловать в Sportcore
+          Добро пожаловать в SPORTCORE
         </h1>
         <p className="mt-4 text-xl sm:text-2xl text-white/100">
           Новая коллекция спортивных товаров 2025 уже в наличии!
