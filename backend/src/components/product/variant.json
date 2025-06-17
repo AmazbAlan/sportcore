@@ -1,0 +1,16 @@
+{
+  "collectionName": "components_product_variants",
+  "info": {
+    "displayName": "Variant"
+  },
+  "options": {},
+  "attributes": {
+    "size": {
+      "type": "string"
+    },
+    "stock": {
+      "type": "biginteger"
+    }
+  },
+  "config": {}
+}

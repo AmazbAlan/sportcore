@@ -35,45 +35,45 @@ export async function generateMetadata(
   }
 }
 
-export default async function ProductPage(
-  { params }: ProductPageProps
-) {
+export default async function ProductPage({ params }: ProductPageProps) {
   const product = await getProductBySlug(params.slug)
   if (!product) {
     return <p className="p-4">Товар не найден.</p>
   }
 
   return (
-    <main className="container mx-auto px-4 py-8 space-y-8">
-      {/* Изображение + основной заголовок/цена */}
+    <main className="container mx-auto px-4 py-8">
       <div className="flex flex-col md:flex-row gap-8">
-        <div className="relative w-full md:w-1/2 h-96">
-          <Image
-            src={product.imageUrl}
-            alt={product.title}
-            fill
-            className="object-contain"
-            priority
-          />
+        {/* Левая часть: изображение + описание */}
+        <div className="w-full md:w-1/2">
+          {/* Картинка */}
+          <div className="relative w-full max-w-[400px] aspect-square bg-white rounded shadow mx-auto">
+            <Image
+              src={product.imageUrl}
+              alt={product.title}
+              fill
+              className="object-contain p-4"
+              priority
+            />
+          </div>
+
+
+          {/* Описание */}
+          <div className="ml-42 mt-6 space-y-2 text-sm text-gray-700">
+            {product.description.map((block, i) => {
+              const text = block.children.map((c) => c.text).join('')
+              return <p key={i}>{text}</p>
+            })}
+          </div>
         </div>
-        <div className="w-full md:w-1/2 space-y-4">
-          <h1 className="text-4xl font-bold">{product.title}</h1>
-          <p className="text-2xl font-semibold">
-            {product.price.toLocaleString()} сом
-          </p>
+
+        {/* Правая часть: название, цена и корзина */}
+        <div className="w-full md:w-1/2 flex flex-col space-y-4">
+          <h1 className="text-3xl font-bold text-[#1a1f4b]">{product.title}</h1>
+          <p className="text-2xl font-semibold text-gray-800">{product.price.toLocaleString()} сом</p>
+          <CartControls product={product} />
         </div>
       </div>
-
-      {/* Описание из Strapi (Rich Text) */}
-      <section className="prose max-w-none">
-        {product.description.map((block, i) => {
-          const txt = block.children.map((c) => c.text).join('')
-          return <p key={i}>{txt}</p>
-        })}
-      </section>
-
-      {/* Блок управления количеством и «В корзину» */}
-      <CartControls product={product} />
     </main>
   )
 }

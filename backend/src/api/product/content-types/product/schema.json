@@ -48,6 +48,14 @@
     },
     "seo_desc": {
       "type": "text"
+    },
+    "variants": {
+      "type": "component",
+      "component": "product.variant",
+      "repeatable": true
+    },
+    "featured": {
+      "type": "boolean"
     }
   }
 }

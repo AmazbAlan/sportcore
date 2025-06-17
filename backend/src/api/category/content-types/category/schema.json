@@ -33,6 +33,19 @@
     },
     "description": {
       "type": "text"
+    },
+    "featured": {
+      "type": "boolean"
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
     }
   }
 }
