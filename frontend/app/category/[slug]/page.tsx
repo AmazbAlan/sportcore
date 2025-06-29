@@ -10,7 +10,7 @@ export default async function CategoryPage({
   searchParams,
 }: {
   params: { slug: string }
-  searchParams?: { [key: string]: string | string[] | undefined }
+  searchParams?: Record<string, string | string[] | undefined>
 }) {
   const slug = params.slug
 
