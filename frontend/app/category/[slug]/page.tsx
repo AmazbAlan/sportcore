@@ -1,21 +1,17 @@
-// frontend/app/category/[slug]/page.tsx
 export const dynamic = 'force-dynamic'
 
 import React from 'react'
 import ProductCard from '../../components/ProductCard'
 import CategoryFilter from '../../components/CategoryFilter'
-// Вместо getAllProducts теперь используем оптимизированный эндпоинт
 import { getProductsByCategory } from '../../../lib/api'
-
-interface CategoryPageProps {
-  params:       { slug: string }
-  searchParams: Record<string, string | string[] | undefined>
-}
 
 export default async function CategoryPage({
   params,
   searchParams,
-}: CategoryPageProps) {
+}: {
+  params: { slug: string }
+  searchParams: Record<string, string | string[] | undefined>
+}) {
   const slug = params.slug
 
   // Извлекаем из URL фильтры
