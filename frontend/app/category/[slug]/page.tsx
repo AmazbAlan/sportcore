@@ -5,26 +5,23 @@ import ProductCard from '../../components/ProductCard'
 import CategoryFilter from '../../components/CategoryFilter'
 import { getProductsByCategory } from '../../../lib/api'
 
-export default async function CategoryPage({
-  params,
-  searchParams,
-}: {
+// типизируем как async component с params и searchParams
+type Props = {
   params: { slug: string }
-  searchParams: Record<string, string | string[] | undefined>
-}) {
+  searchParams?: Record<string, string | string[] | undefined>
+}
+
+export default async function CategoryPage({ params, searchParams }: Props) {
   const slug = params.slug
 
-  // Извлекаем из URL фильтры
-  const rawPrice  = Array.isArray(searchParams.price)  ? searchParams.price[0]  : searchParams.price
-  const rawSearch = Array.isArray(searchParams.search) ? searchParams.search[0] : searchParams.search
+  const rawPrice  = Array.isArray(searchParams?.price)  ? searchParams?.price[0]  : searchParams?.price
+  const rawSearch = Array.isArray(searchParams?.search) ? searchParams?.search[0] : searchParams?.search
 
   const maxPrice = rawPrice  ? Number(rawPrice) : undefined
   const search   = rawSearch ? rawSearch.toLowerCase() : undefined
 
-  // Запрашиваем сразу отфильтрованные по категории (и опционально по цене) товары
   const productsByCategory = await getProductsByCategory(slug, maxPrice)
 
-  // Если есть поисковый запрос — дополнительно фильтруем по title
   const products = search
     ? productsByCategory.filter((p) =>
         p.title.toLowerCase().includes(search)
@@ -37,7 +34,6 @@ export default async function CategoryPage({
         {decodeURIComponent(slug)}
       </h1>
 
-      {/* Форма фильтра обновляет URL: передаёт price и search */}
       <CategoryFilter categorySlug={slug} />
 
       {products.length === 0 ? (
