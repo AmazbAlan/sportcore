@@ -1,8 +1,5 @@
-import { NextConfig } from 'next'
-
-const nextConfig: NextConfig = {
+const nextConfig = {
   reactStrictMode: true,
-
   images: {
     domains: ['localhost'],
     remotePatterns: [
@@ -14,13 +11,11 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-
   env: {
     STRAPI_URL: process.env.STRAPI_URL,
   },
-
   typescript: {
-    ignoreBuildErrors: true, // 👈 ВАЖНО: временно, чтобы пройти билд
+    ignoreBuildErrors: true, // ✅ разрешает билд при типовой ошибке
   },
 }
 
