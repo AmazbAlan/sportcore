@@ -1,6 +1,5 @@
 export const dynamic = 'force-dynamic'
 
-import React from 'react'
 import ProductCard from '../../components/ProductCard'
 import CategoryFilter from '../../components/CategoryFilter'
 import { getProductsByCategory } from '../../../lib/api'
@@ -14,11 +13,16 @@ export default async function CategoryPage({
 }) {
   const slug = params.slug
 
-  const rawPrice  = Array.isArray(searchParams?.price)  ? searchParams?.price[0]  : searchParams?.price
-  const rawSearch = Array.isArray(searchParams?.search) ? searchParams?.search[0] : searchParams?.search
+  const rawPrice = Array.isArray(searchParams?.price)
+    ? searchParams?.price[0]
+    : searchParams?.price
 
-  const maxPrice = rawPrice  ? Number(rawPrice) : undefined
-  const search   = rawSearch ? rawSearch.toLowerCase() : undefined
+  const rawSearch = Array.isArray(searchParams?.search)
+    ? searchParams?.search[0]
+    : searchParams?.search
+
+  const maxPrice = rawPrice ? Number(rawPrice) : undefined
+  const search = rawSearch ? rawSearch.toLowerCase() : undefined
 
   const productsByCategory = await getProductsByCategory(slug, maxPrice)
 
