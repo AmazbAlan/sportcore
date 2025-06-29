@@ -5,13 +5,13 @@ import ProductCard from '../../components/ProductCard'
 import CategoryFilter from '../../components/CategoryFilter'
 import { getProductsByCategory } from '../../../lib/api'
 
-// типизируем как async component с params и searchParams
-type Props = {
+export default async function CategoryPage({
+  params,
+  searchParams,
+}: {
   params: { slug: string }
-  searchParams?: Record<string, string | string[] | undefined>
-}
-
-export default async function CategoryPage({ params, searchParams }: Props) {
+  searchParams?: { [key: string]: string | string[] | undefined }
+}) {
   const slug = params.slug
 
   const rawPrice  = Array.isArray(searchParams?.price)  ? searchParams?.price[0]  : searchParams?.price
