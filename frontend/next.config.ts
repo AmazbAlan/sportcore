@@ -21,13 +21,6 @@ const nextConfig: NextConfig = {
     STRAPI_URL: process.env.STRAPI_URL,
   },
 }
-module.exports = {
-  extends: ['next', 'next/core-web-vitals'],
-  rules: {
-    '@typescript-eslint/no-unused-vars': 'off',
-    '@typescript-eslint/no-explicit-any': 'off',
-  },
-}
 
 
 export default nextConfig
