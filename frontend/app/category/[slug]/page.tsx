@@ -1,6 +1,5 @@
 export const dynamic = 'force-dynamic'
 
-import { FC } from 'react'
 import { getProductsByCategory } from '../../../lib/api'
 import ProductCard from '../../components/ProductCard'
 import CategoryFilter from '../../components/CategoryFilter'
@@ -10,7 +9,7 @@ type Props = {
   searchParams?: Record<string, string | string[] | undefined>
 }
 
-const CategoryPage: FC<Props> = async ({ params, searchParams }) => {
+export default async function CategoryPage({ params, searchParams }: Props) {
   const slug = params.slug
 
   const rawPrice = Array.isArray(searchParams?.price)
@@ -60,5 +59,3 @@ const CategoryPage: FC<Props> = async ({ params, searchParams }) => {
     </main>
   )
 }
-
-export default CategoryPage
