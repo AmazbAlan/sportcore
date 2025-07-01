@@ -29,9 +29,8 @@ export default function Footer() {
         <div>
           <h3 className="font-semibold text-2xl mb-4">Контакты</h3>
           <ul className="space-y-3">
-            <li className="flex items-center gap-2"><FaMapMarkerAlt /> Бишкек, ул. Чокморова 24/3</li>
-            <li className="flex items-center gap-2"><FaPhone /> +996 777 77 77 77</li>
-            <li className="flex items-center gap-2"><FaEnvelope /> sportcore@gmail.com</li>
+            <li className="flex items-center gap-2"><FaMapMarkerAlt /> Бишкек, проспект Ч. Айтматова, 299в, ТЦ Ала-Арча</li>
+            <li className="flex items-center gap-2"><FaPhone /> +996 774 23 12 02</li>
           </ul>
         </div>
       </div>
