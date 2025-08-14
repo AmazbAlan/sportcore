@@ -1,22 +1,18 @@
+// next.config.js
+/** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    domains: ['localhost'],
     remotePatterns: [
-      {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '1337',
-        pathname: '/uploads/**',
-      },
+      { protocol: 'https', hostname: 'sportcore-production.up.railway.app', pathname: '/uploads/**' },
+      { protocol: 'http',  hostname: 'localhost', port: '1337', pathname: '/uploads/**' }, // для локалки
     ],
+    // временный обход, если нужно проверить без оптимизатора:
+    // unoptimized: true,
   },
   env: {
-    STRAPI_URL: process.env.STRAPI_URL,
+    NEXT_PUBLIC_STRAPI_URL: process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337',
   },
-  typescript: {
-    ignoreBuildErrors: true, // ✅ разрешает билд при типовой ошибке
-  },
-}
-
-export default nextConfig
+  typescript: { ignoreBuildErrors: true },
+};
+export default nextConfig;
