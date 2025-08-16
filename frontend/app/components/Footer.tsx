@@ -1,4 +1,4 @@
-import { FaInstagram,  FaFacebook, FaPhone, FaMapMarkerAlt, FaEnvelope } from 'react-icons/fa'
+import { FaInstagram, FaPhone, FaMapMarkerAlt, FaEnvelope } from 'react-icons/fa'
 import Link from 'next/link'
 
 export default function Footer() {
@@ -21,7 +21,9 @@ export default function Footer() {
           <ul className="space-y-3">
             <li><Link href="/" className="hover:text-yellow-400">Главная</Link></li>
             <li><Link href="/category" className="hover:text-yellow-400">Категории</Link></li>
+            <li><Link href="/faq" className="hover:text-yellow-400">Часто задаваемые вопросы</Link></li>
             <li><Link href="/cart" className="hover:text-yellow-400">Корзина</Link></li>
+            
           </ul>
         </div>
 
@@ -29,7 +31,8 @@ export default function Footer() {
         <div>
           <h3 className="font-semibold text-2xl mb-4">Контакты</h3>
           <ul className="space-y-3">
-            <li className="flex items-center gap-2"><FaMapMarkerAlt /> Бишкек, проспект Ч. Айтматова, 299в, ТЦ Ала-Арча</li>
+            <li className="flex items-center gap-2"><FaMapMarkerAlt /> Бишкек, проспект Ч. Айтматова 299в, ТЦ Ала-Арча</li>
+            <li className="flex items-center gap-2"><FaMapMarkerAlt /> Бишкек, проспект Чуй 150a,  ТЦ Beta Stores 1</li>
             <li className="flex items-center gap-2"><FaPhone /> +996 774 23 12 02</li>
           </ul>
         </div>

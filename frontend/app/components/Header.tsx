@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation'
 import {
   FaShoppingCart,
   FaSearch,
-  FaPhoneAlt,
   FaBars,
   FaTimes
 } from 'react-icons/fa'
@@ -122,10 +121,13 @@ export default function Header() {
             Главная
           </Link>
           <Link href="/category" onClick={() => setMobileMenuOpen(false)} className="block hover:text-blue-400">
-            Категории
+            Каталог
+          </Link>
+          <Link href="/faq" onClick={() => setMobileMenuOpen(false)} className="block hover:text-blue-400">
+            Часто задаваемые вопросы
           </Link>
           <a
-            href="https://api.whatsapp.com/send?phone=+996708201663&text=Здравствуйте%2C%20я%20пишу%20с%20сайта"
+            href="https://api.whatsapp.com/send?phone=+996774231202&text=Здравствуйте%2C%20я%20пишу%20с%20сайта"
             target="_blank"
             rel="noopener noreferrer"
             className="block hover:text-green-400"
@@ -149,10 +151,16 @@ export default function Header() {
             href="/category"
             className="text-lg font-semibold text-gray-200 transition-colors duration-200 hover:text-blue-400"
           >
-            Категории
+            Каталог
+          </Link>
+           <Link
+            href="/faq"
+            className="text-lg font-semibold text-gray-200 transition-colors duration-200 hover:text-blue-400"
+          >
+            Часто задаваемые вопросы
           </Link>
           <a
-            href="https://api.whatsapp.com/send?phone=+996708201663&text=Здравствуйте%2C%20я%20пишу%20с%20сайта"
+            href="https://api.whatsapp.com/send?phone=+996774231202&text=Здравствуйте%2C%20я%20пишу%20с%20сайта"
             target="_blank"
             rel="noopener noreferrer"
             className="text-lg font-semibold text-gray-200 transition-colors duration-200 hover:text-green-400"

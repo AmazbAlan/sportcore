@@ -34,7 +34,7 @@ export default function CheckoutPage() {
     clear()
 
     // Перенаправить в WhatsApp
-    window.location.href = `https://wa.me/+996708201663/?text=${text}`
+    window.location.href = `https://wa.me/+996774231202/?text=${text}`
   }
 
   return (
