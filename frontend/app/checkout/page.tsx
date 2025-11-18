@@ -1,7 +1,16 @@
 // frontend/app/checkout/page.tsx
 'use client'
+
 import React, { useState } from 'react'
 import { useCart } from '../context/CartContext'
+
+
+export const metadata = {
+  title: 'Оформление заказа | SportCore',
+  description:
+    'Оформление заказа спортивных товаров в магазине SportCore. Быстрая доставка по Бишкеку. Заполните данные и подтвердите заказ через WhatsApp.',
+}
+
 
 export default function CheckoutPage() {
   const { items, total, clear } = useCart()

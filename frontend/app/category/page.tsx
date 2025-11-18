@@ -4,6 +4,13 @@ import CategoryCard from '../components/CategoryCard'
 
 export const dynamic = 'force-dynamic'
 
+// ✅ Добавляем метаданные для SEO
+export const metadata = {
+  title: 'Все категории спортивных товаров | SportCore',
+  description:
+    'Каталог спортивных товаров, инвентаря для спорта: мячи, гантели, спортивная форма, аксессуары и многое другое. Быстрая доставка по Бишкеку.',
+}
+
 export default async function CategoryIndexPage() {
   const categories = await getAllCategories()
 

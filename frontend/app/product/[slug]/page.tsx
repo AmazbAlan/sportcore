@@ -7,6 +7,14 @@ import { Metadata } from 'next'
 import { getProductBySlug, Product } from '../../../lib/api'
 import CartControls from './CartControls'
 
+
+export const metadata = {
+  title: '{product.title} — купить в Бишкеке | Sportcore',
+  description:
+    'Купить {product.title} в Бишкеке по выгодной цене. Характеристики, описание, фото. Доставка по городу. Sportcore — спортивные товары высокого качества.',
+}
+
+
 interface ProductPageProps {
   params: { slug: string }
 }

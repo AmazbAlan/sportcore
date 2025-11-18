@@ -4,6 +4,28 @@ import Image from 'next/image'
 import Link from 'next/link'
 // заменили getProductsBySearch на searchProducts
 import { searchProducts, Product } from '../../lib/api'
+import { Metadata } from "next"
+
+export async function generateMetadata({ searchParams }: SearchPageProps): Promise<Metadata> {
+  const query = searchParams.query?.trim() || ''
+
+  if (!query) {
+    return {
+      title: "Поиск товаров — Sportcore",
+      description: "Введите поисковый запрос, чтобы найти товары в магазине Sportcore."
+    }
+  }
+
+  return {
+    title: `Поиск: «${query}» — Sportcore`,
+    description: `Результаты поиска по запросу «${query}». Найдите нужные товары в интернет-магазине Sportcore.`,
+    openGraph: {
+      title: `Поиск: «${query}» — Sportcore`,
+      description: `Результаты поиска по запросу «${query}».`,
+    }
+  }
+}
+
 
 interface SearchPageProps {
   searchParams: { query?: string }
