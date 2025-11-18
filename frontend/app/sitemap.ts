@@ -1,7 +1,7 @@
 import { MetadataRoute } from "next";
 
 // ⚠️ Укажи свой Strapi API URL
-const API_URL = "https://sportcore-production.up.railway.app//api";
+const API_URL = "https://sportcore-production.up.railway.app/api";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Получаем категории
