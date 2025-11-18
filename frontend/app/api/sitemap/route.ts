@@ -19,7 +19,7 @@ export async function GET() {
     (path) => `${baseUrl}${path}`
   );
 
-  let urls = [
+  const urls = [
     ...staticPages,
     ...categories.map((c: any) => `${baseUrl}/category/${c.attributes.slug}`),
     ...products.map((p: any) => `${baseUrl}/product/${p.attributes.slug}`),
