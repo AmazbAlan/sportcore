@@ -4,16 +4,8 @@ export const dynamic = 'force-dynamic'
 import React from 'react'
 import Image from 'next/image'
 import { Metadata } from 'next'
-import { getProductBySlug, Product } from '../../../lib/api'
+import { getProductBySlug } from '../../../lib/api'
 import CartControls from './CartControls'
-
-
-export const metadata = {
-  title: '{product.title} — купить в Бишкеке | Sportcore',
-  description:
-    'Купить {product.title} в Бишкеке по выгодной цене. Характеристики, описание, фото. Доставка по городу. Sportcore — спортивные товары высокого качества.',
-}
-
 
 interface ProductPageProps {
   params: { slug: string }
@@ -23,20 +15,27 @@ export async function generateMetadata(
   { params }: ProductPageProps
 ): Promise<Metadata> {
   const product = await getProductBySlug(params.slug)
+
   if (!product) {
-    return { title: 'Товар не найден — Sportcore' }
+    return {
+      title: 'Товар не найден — Sportcore',
+      description: 'Товар отсутствует или был удалён из каталога.',
+    }
   }
 
-  // Собираем текст описания в одну строку для метаданных
+  // Берём описание как текст
   const desc = product.description
-    .map((block) => block.children.map((c) => c.text).join(''))
-    .join('\n\n')
+    .map((block) => block.children.map((c) => c.text).join(' '))
+    .join(' ')
+    .slice(0, 200) // ограничим, чтобы description был SEO-дружелюбный
 
   return {
-    title: product.title,
-    description: desc,
-    openGraph: {
-      title: product.title,
+    title: `${product.title} — купить в Бишкеке | Sportcore`,
+    description:
+      desc ||
+      `Купить ${product.title} в Бишкеке. Описание, характеристики, фото. Быстрая доставка по городу.`,
+      openGraph: {
+      title: `${product.title} — Sportcore`,
       description: desc,
       images: [product.imageUrl],
     },
@@ -45,6 +44,7 @@ export async function generateMetadata(
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const product = await getProductBySlug(params.slug)
+
   if (!product) {
     return <p className="p-4">Товар не найден.</p>
   }
@@ -52,9 +52,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
   return (
     <main className="container mx-auto px-4 py-8">
       <div className="flex flex-col md:flex-row gap-8">
-        {/* Левая часть: изображение + описание */}
+        {/* Левая часть */}
         <div className="w-full md:w-1/2">
-          {/* Картинка */}
           <div className="relative w-full max-w-[400px] aspect-square bg-white rounded shadow mx-auto">
             <Image
               src={product.imageUrl}
@@ -65,20 +64,25 @@ export default async function ProductPage({ params }: ProductPageProps) {
             />
           </div>
 
-
           {/* Описание */}
-          <div className="ml-42 mt-6 space-y-2 text-sm text-gray-700">
+          <div className="mt-6 space-y-2 text-sm text-gray-700">
             {product.description.map((block, i) => {
-              const text = block.children.map((c) => c.text).join('')
+              const text = block.children.map((c) => c.text).join(' ')
               return <p key={i}>{text}</p>
             })}
           </div>
         </div>
 
-        {/* Правая часть: название, цена и корзина */}
+        {/* Правая часть */}
         <div className="w-full md:w-1/2 flex flex-col space-y-4">
-          <h1 className="text-3xl font-bold text-[#1a1f4b]">{product.title}</h1>
-          <p className="text-2xl font-semibold text-gray-800">{product.price.toLocaleString()} сом</p>
+          <h1 className="text-3xl font-bold text-[#1a1f4b]">
+            {product.title}
+          </h1>
+
+          <p className="text-2xl font-semibold text-gray-800">
+            {product.price.toLocaleString()} сом
+          </p>
+
           <CartControls product={product} />
         </div>
       </div>
