@@ -31,7 +31,7 @@ export default function Footer() {
         <div>
           <h3 className="font-semibold text-2xl mb-4">Контакты</h3>
           <ul className="space-y-3">
-            <li className="flex items-center gap-2"><FaMapMarkerAlt /> Бишкек, проспект Ч. Айтматова 299в, ТЦ Ала-Арча</li>
+            <li className="flex items-center gap-2"><FaMapMarkerAlt /> Бишкек, Улица Калыка Акиева 66, ТЦ Vesna </li>
             <li className="flex items-center gap-2"><FaMapMarkerAlt /> Бишкек, проспект Чуй 150a,  ТЦ Beta Stores 1</li>
             <li className="flex items-center gap-2"><FaPhone /> +996 774 23 12 02</li>
           </ul>
