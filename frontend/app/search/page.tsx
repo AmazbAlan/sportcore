@@ -11,16 +11,16 @@ export async function generateMetadata({ searchParams }: SearchPageProps): Promi
 
   if (!query) {
     return {
-      title: "Поиск товаров — Sportcore",
-      description: "Введите поисковый запрос, чтобы найти товары в магазине Sportcore."
+      title: "Поиск товаров — SPORTCORE | Спорткор | Спорт кор",
+      description: "Введите поисковый запрос, чтобы найти товары в магазине SPORTCORE | Спорткор | Спорт кор."
     }
   }
 
   return {
-    title: `Поиск: «${query}» — Sportcore`,
-    description: `Результаты поиска по запросу «${query}». Найдите нужные товары в интернет-магазине Sportcore.`,
+    title: `Поиск: «${query}» — SPORTCORE | Спорткор | Спорт кор`,
+    description: `Результаты поиска по запросу «${query}». Найдите нужные товары в интернет-магазине SPORTCORE | Спорткор | Спорт кор.`,
     openGraph: {
-      title: `Поиск: «${query}» — Sportcore`,
+      title: `Поиск: «${query}» — SPORTCORE | Спорткор | Спорт кор`,
       description: `Результаты поиска по запросу «${query}».`,
     }
   }
