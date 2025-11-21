@@ -3,11 +3,11 @@ import type { Metadata } from "next";
 
 
 export const metadata: Metadata = {
-  title: "Часто задаваемые вопросы | SPORTCORE",
+  title: "Часто задаваемые вопросы | SPORTCORE | Спорткор | Спорт кор",
   description:
     "Ответы на популярные вопросы о заказе, оплате, доставке, возврате и гарантии в магазине SPORTCORE.",
   openGraph: {
-    title: "Часто задаваемые вопросы | SPORTCORE",
+    title: "Часто задаваемые вопросы | SPORTCORE | Спорткор | Спорт кор",
     description:
       "Ответы на популярные вопросы о заказе, оплате, доставке, возврате и гарантии в магазине SPORTCORE.",
     type: "website",
