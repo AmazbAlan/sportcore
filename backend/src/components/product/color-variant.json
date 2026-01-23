@@ -1,0 +1,24 @@
+{
+  "collectionName": "components_product_color_variants",
+  "info": {
+    "displayName": "ColorVariant",
+    "icon": "paint"
+  },
+  "options": {},
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "image": {
+      "type": "media",
+      "multiple": true,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    }
+  },
+  "config": {}
+}

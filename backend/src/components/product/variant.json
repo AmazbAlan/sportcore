@@ -10,6 +10,11 @@
     },
     "stock": {
       "type": "biginteger"
+    },
+    "color": {
+      "type": "component",
+      "component": "product.color-variant",
+      "repeatable": true
     }
   },
   "config": {}
