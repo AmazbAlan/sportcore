@@ -4,10 +4,20 @@ export type RichTextBlock = {
   children: { text: string }[]
 }
 
+export type Media = {
+  url: string
+}
+
+export type VariantColor = {
+  name: string
+  image?: Media[] // multiple media
+}
+
 export type ProductVariant = {
   id: number
   size: string
   stock: number
+  color?: VariantColor[]
 }
 
 export type Product = {
@@ -47,21 +57,49 @@ async function fetchJSON<T>(url: string): Promise<T> {
   return res.json()
 }
 
+function withApiUrl(url?: string | null): string | null {
+  if (!url) return null
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+  return `${API_URL}${url}`
+}
+
+/**
+ * Strapi-safe populate для продуктов:
+ * - image
+ * - category
+ * - variants
+ * - variants.color
+ * - variants.color.image (media)
+ */
+function productPopulateQuery(): URLSearchParams {
+  const qp = new URLSearchParams()
+  qp.set('populate[image]', 'true')
+  qp.set('populate[category]', 'true')
+  qp.set('populate[variants]', 'true')
+  qp.set('populate[variants][populate][color]', 'true')
+  qp.set('populate[variants][populate][color][populate][image]', 'true')
+  return qp
+}
+
 function flattenProduct(entry: any): Product {
   const raw = entry.attributes ?? entry
 
   const slug = raw.slug ?? entry.slug ?? ''
   const title = raw.title ?? entry.title ?? ''
-  const price = raw.price ?? entry.price ?? 0
+  const price = Number(raw.price ?? entry.price ?? 0)
 
+  // product image
   let imageUrl = '/placeholder.jpg'
-  if (Array.isArray(raw.image?.data)) {
-    const img = raw.image.data[0]?.attributes
-    if (img?.url) imageUrl = `${API_URL}${img.url}`
-  } else if (Array.isArray(entry.image) && entry.image[0]?.url) {
-    imageUrl = `${API_URL}${entry.image[0].url}`
+  const imgData = raw.image?.data
+  if (Array.isArray(imgData)) {
+    const u = withApiUrl(imgData[0]?.attributes?.url)
+    if (u) imageUrl = u
+  } else if (imgData?.attributes?.url) {
+    const u = withApiUrl(imgData.attributes.url)
+    if (u) imageUrl = u
   }
 
+  // category slug
   let categorySlug = ''
   if (raw.category?.data?.attributes?.slug) {
     categorySlug = raw.category.data.attributes.slug
@@ -72,15 +110,37 @@ function flattenProduct(entry: any): Product {
   const description: RichTextBlock[] = raw.description ?? []
 
   const variants: ProductVariant[] = Array.isArray(raw.variants)
-    ? raw.variants.map((v: any) => ({
-        id: v.id,
-        size: v.size,
-        stock: v.stock,
-      }))
+    ? raw.variants.map((v: any) => {
+        const colors: VariantColor[] = Array.isArray(v?.color)
+          ? v.color.map((c: any) => {
+              const name = c?.name ?? ''
+
+              const mediaData = c?.image?.data
+              const images: Media[] = Array.isArray(mediaData)
+                ? mediaData
+                    .map((m: any) => withApiUrl(m?.attributes?.url))
+                    .filter((u: string | null): u is string => Boolean(u))
+                    .map((u: string) => ({ url: u }))
+                : []
+
+              return {
+                name,
+                image: images.length ? images : undefined,
+              }
+            })
+          : []
+
+        return {
+          id: Number(v?.id ?? 0),
+          size: (v?.size ?? '') as string,
+          stock: Number(v?.stock ?? 0),
+          color: colors.length ? colors : undefined,
+        }
+      })
     : []
 
   return {
-    id: entry.id,
+    id: Number(entry.id),
     slug,
     title,
     price,
@@ -91,14 +151,17 @@ function flattenProduct(entry: any): Product {
   }
 }
 
+// ---------------- PRODUCTS ----------------
+
 export async function getAllProducts(): Promise<Product[]> {
-  const url = `${API_URL}/api/products?populate=*`
+  const qp = productPopulateQuery()
+  const url = `${API_URL}/api/products?${qp.toString()}`
   const resp = await fetchJSON<StrapiListResponse<any>>(url)
   return resp.data.map(flattenProduct)
 }
 
 export async function getProductsByCategory(slug: string, maxPrice?: number): Promise<Product[]> {
-  const qp = new URLSearchParams({ populate: '*' })
+  const qp = productPopulateQuery()
   qp.set('filters[category][slug][$eq]', slug)
   if (maxPrice !== undefined) qp.set('filters[price][$lte]', String(maxPrice))
 
@@ -108,7 +171,7 @@ export async function getProductsByCategory(slug: string, maxPrice?: number): Pr
 }
 
 export async function searchProducts(query: string): Promise<Product[]> {
-  const qp = new URLSearchParams({ populate: '*' })
+  const qp = productPopulateQuery()
   qp.set('filters[title][$containsi]', query)
 
   const url = `${API_URL}/api/products?${qp.toString()}`
@@ -117,7 +180,7 @@ export async function searchProducts(query: string): Promise<Product[]> {
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
-  const qp = new URLSearchParams({ populate: '*' })
+  const qp = productPopulateQuery()
   qp.set('filters[slug][$eq]', slug)
 
   const url = `${API_URL}/api/products?${qp.toString()}`
@@ -126,79 +189,9 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
   return flattenProduct(resp.data[0])
 }
 
-export async function getAllCategories(): Promise<Category[]> {
-  const url = `${API_URL}/api/categories?populate=*`
-  const resp = await fetchJSON<StrapiListResponse<any>>(url)
-
-  return resp.data.map((entry) => {
-    const img = Array.isArray(entry.image) ? entry.image[0] : entry.image
-    const imageUrl = img?.url ? `${API_URL}${img.url}` : '/placeholder-category.jpg'
-
-    return {
-      name: entry.name ?? '',
-      slug: entry.slug ?? '',
-      imageUrl,
-    }
-  })
-}
-
-
-
-export async function getBannerCategories(): Promise<BannerCategory[]> {
-  const qp = new URLSearchParams({
-    populate: '*',
-    'filters[featured][$eq]': 'true',
-  })
-  const url = `${API_URL}/api/categories?${qp.toString()}`
-  const resp = await fetchJSON<StrapiListResponse<any>>(url)
-
-  console.log('RAW STRAPI CATEGORY ENTRIES:', resp.data)
-
-  return resp.data.map((entry) => {
-    const img = Array.isArray(entry.image) ? entry.image[0] : entry.image
-    const imageUrl = img?.url ? `${API_URL}${img.url}` : '/placeholder-category.jpg'
-
-    return {
-      name: entry.name ?? '',
-      slug: entry.slug ?? '',
-      imageUrl,
-    }
-  })
-}
-
-
-export async function getNonBannerCategories(): Promise<BannerCategory[]> {
-  const qp = new URLSearchParams({
-    populate: '*',
-    'filters[featured][$eq]': 'false',
-  })
-  const url = `${API_URL}/api/categories?${qp.toString()}`
-  const resp = await fetchJSON<StrapiListResponse<any>>(url)
-
-  return resp.data.map((entry) => {
-    const raw = entry.attributes ?? {}
-    const imgData = raw.image?.data
-
-    let imageUrl = '/placeholder.jpg'
-    if (Array.isArray(imgData) && imgData[0]?.attributes?.url) {
-      imageUrl = `${API_URL}${imgData[0].attributes.url}`
-    } else if (imgData?.attributes?.url) {
-      imageUrl = `${API_URL}${imgData.attributes.url}`
-    }
-
-    return {
-      name: raw.name ?? '',
-      slug: raw.slug ?? '',
-      imageUrl,
-    }
-  })
-}
-
 export async function getFeaturedProducts(): Promise<Product[]> {
-  const qp = new URLSearchParams({
-    populate: '*',
-    'filters[featured][$eq]': 'true',
-  })
+  const qp = productPopulateQuery()
+  qp.set('filters[featured][$eq]', 'true')
 
   const url = `${API_URL}/api/products?${qp.toString()}`
 
@@ -209,4 +202,89 @@ export async function getFeaturedProducts(): Promise<Product[]> {
     console.error('Ошибка получения избранных товаров:', err)
     return []
   }
+}
+
+// ---------------- CATEGORIES ----------------
+
+export async function getAllCategories(): Promise<Category[]> {
+  const url = `${API_URL}/api/categories?populate=*`
+  const resp = await fetchJSON<StrapiListResponse<any>>(url)
+
+  return resp.data.map((entry) => {
+    const raw = entry.attributes ?? entry
+    const imgData = raw.image?.data
+
+    let imageUrl = '/placeholder-category.jpg'
+    if (Array.isArray(imgData) && imgData[0]?.attributes?.url) {
+      const u = withApiUrl(imgData[0].attributes.url)
+      if (u) imageUrl = u
+    } else if (imgData?.attributes?.url) {
+      const u = withApiUrl(imgData.attributes.url)
+      if (u) imageUrl = u
+    }
+
+    return {
+      name: raw.name ?? '',
+      slug: raw.slug ?? '',
+      imageUrl,
+    }
+  })
+}
+
+export async function getBannerCategories(): Promise<BannerCategory[]> {
+  const qp = new URLSearchParams()
+  qp.set('populate', '*')
+  qp.set('filters[featured][$eq]', 'true')
+
+  const url = `${API_URL}/api/categories?${qp.toString()}`
+  const resp = await fetchJSON<StrapiListResponse<any>>(url)
+
+  return resp.data.map((entry) => {
+    const raw = entry.attributes ?? entry
+    const imgData = raw.image?.data
+
+    let imageUrl = '/placeholder-category.jpg'
+    if (Array.isArray(imgData) && imgData[0]?.attributes?.url) {
+      const u = withApiUrl(imgData[0].attributes.url)
+      if (u) imageUrl = u
+    } else if (imgData?.attributes?.url) {
+      const u = withApiUrl(imgData.attributes.url)
+      if (u) imageUrl = u
+    }
+
+    return {
+      name: raw.name ?? '',
+      slug: raw.slug ?? '',
+      imageUrl,
+    }
+  })
+}
+
+export async function getNonBannerCategories(): Promise<BannerCategory[]> {
+  const qp = new URLSearchParams()
+  qp.set('populate', '*')
+  qp.set('filters[featured][$eq]', 'false')
+
+  const url = `${API_URL}/api/categories?${qp.toString()}`
+  const resp = await fetchJSON<StrapiListResponse<any>>(url)
+
+  return resp.data.map((entry) => {
+    const raw = entry.attributes ?? entry
+    const imgData = raw.image?.data
+
+    let imageUrl = '/placeholder.jpg'
+    if (Array.isArray(imgData) && imgData[0]?.attributes?.url) {
+      const u = withApiUrl(imgData[0].attributes.url)
+      if (u) imageUrl = u
+    } else if (imgData?.attributes?.url) {
+      const u = withApiUrl(imgData.attributes.url)
+      if (u) imageUrl = u
+    }
+
+    return {
+      name: raw.name ?? '',
+      slug: raw.slug ?? '',
+      imageUrl,
+    }
+  })
 }

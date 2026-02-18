@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const STRAPI_URL = process.env.STRAPI_URL || 'http://localhost:1337'
+const STRAPI_URL = process.env.STRAPI_URL || 'https://sportcore-production.up.railway.app/'
 
 export async function POST(req: NextRequest) {
   const { items } = await req.json() as { items: { productId: number; qty: number }[] }

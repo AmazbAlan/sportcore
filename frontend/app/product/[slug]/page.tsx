@@ -7,14 +7,15 @@ import { Metadata } from 'next'
 import { getProductBySlug } from '../../../lib/api'
 import CartControls from './CartControls'
 
-interface ProductPageProps {
-  params: { slug: string }
+type ProductPageProps = {
+  params: Promise<{ slug: string }>
 }
 
 export async function generateMetadata(
   { params }: ProductPageProps
 ): Promise<Metadata> {
-  const product = await getProductBySlug(params.slug)
+  const { slug } = await params
+  const product = await getProductBySlug(slug)
 
   if (!product) {
     return {
@@ -23,18 +24,17 @@ export async function generateMetadata(
     }
   }
 
-  // Берём описание как текст
-  const desc = product.description
-    .map((block) => block.children.map((c) => c.text).join(' '))
+  const desc = (product.description ?? [])
+    .map((block) => (block.children ?? []).map((c) => c.text).join(' '))
     .join(' ')
-    .slice(0, 200) // ограничим, чтобы description был SEO-дружелюбный
+    .slice(0, 200)
 
   return {
     title: `${product.title} — купить в Бишкеке | Sportcore`,
     description:
       desc ||
       `Купить ${product.title} в Бишкеке. Описание, характеристики, фото. Быстрая доставка по городу.`,
-      openGraph: {
+    openGraph: {
       title: `${product.title} — Sportcore`,
       description: desc,
       images: [product.imageUrl],
@@ -42,9 +42,9 @@ export async function generateMetadata(
   }
 }
 
-export default async function ProductPage({ params }: ProductPageProps) {
-  const product = await getProductBySlug(params.slug)
 
+export default async function ProductPage({ params }: ProductPageProps) {
+  const product = await getProductBySlug((await params).slug)
   if (!product) {
     return <p className="p-4">Товар не найден.</p>
   }

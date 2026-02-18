@@ -11,6 +11,7 @@ export interface CartItem {
   title: string
   price: number
   qty: number
+  color?: string
 }
 
 interface CartContextValue {
@@ -34,7 +35,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     newItem: Omit<CartItem, 'id' | 'qty'>,
     qty: number = 1
   ) => {
-    const id = `${newItem.productId}-${newItem.variantId}`
+    const id = `${newItem.productId}-${newItem.variantId}-${newItem.color ?? ''}`
     setItems((cur) => {
       const idx = cur.findIndex((i) => i.id === id)
       if (idx >= 0) {
