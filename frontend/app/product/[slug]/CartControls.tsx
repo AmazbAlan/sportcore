@@ -98,7 +98,7 @@ export default function CartControls({ product }: CartControlsProps) {
 
                   return (
                     <button
-                      key={idx}
+                      key={c.name}
                       onClick={() => setColor(c)}
                       className={`
                         w-14 h-14 rounded-full border-2 overflow-hidden

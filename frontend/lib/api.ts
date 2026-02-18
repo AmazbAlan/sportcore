@@ -116,17 +116,21 @@ function flattenProduct(entry: any): Product {
               const name = c?.name ?? ''
 
               const mediaData = c?.image?.data
-              const images: Media[] = Array.isArray(mediaData)
+              const urls: string[] = Array.isArray(mediaData)
                 ? mediaData
                     .map((m: any) => withApiUrl(m?.attributes?.url))
-                    .filter((u: string | null): u is string => Boolean(u))
-                    .map((u: string) => ({ url: u }))
+                    .filter((u: any): u is string => Boolean(u))
+                : mediaData?.attributes?.url
+                ? [withApiUrl(mediaData.attributes.url)].filter((u): u is string => Boolean(u))
                 : []
+
+              const images: Media[] = urls.map((u) => ({ url: u }))
 
               return {
                 name,
                 image: images.length ? images : undefined,
               }
+
             })
           : []
 
