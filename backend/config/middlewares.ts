@@ -1,5 +1,6 @@
 module.exports = [
   'strapi::errors',
+
   {
     name: 'strapi::security',
     config: {
@@ -7,6 +8,7 @@ module.exports = [
         useDefaults: true,
         directives: {
           'default-src': ["'self'"],
+
           'img-src': [
             "'self'",
             'data:',
@@ -14,6 +16,7 @@ module.exports = [
             'https://res.cloudinary.com',
             'https://*.cloudinary.com',
           ],
+
           'media-src': [
             "'self'",
             'data:',
@@ -21,22 +24,29 @@ module.exports = [
             'https://res.cloudinary.com',
             'https://*.cloudinary.com',
           ],
-          'connect-src': ["'self'", 'https:', 'http:'],
+
+          'connect-src': [
+            "'self'",
+            'https:',
+            'wss:',
+          ],
+
           'frame-src': ["'self'"],
         },
       },
     },
   },
+
   {
     name: 'strapi::cors',
     config: {
       origin: [
-        'https://ТВОЙФРОНТЕНД.com',
-        'https://api.ТВОЙДОМЕН.com',
+        'https://sportcore-production.up.railway.app',
       ],
       credentials: true,
     },
   },
+
   'strapi::poweredBy',
   'strapi::logger',
   'strapi::query',
