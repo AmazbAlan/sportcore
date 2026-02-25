@@ -139,16 +139,52 @@ function flattenProduct(entry: any): Product {
 
   // 1) Пробуем найти картинку в разных полях
   //    (часто в проектах поле называют images или imageUrl)
-  const candidate =
-    raw.image ??
-    raw.images ??
-    raw.mainImage ??
-    raw.thumbnail ??
-    raw.photo ??
-    raw.picture ??
-    raw.imageUrl // если это строка — pickMediaUrl тоже отработает
+ const candidate =
+  raw.image ??
+  raw.images ??
+  raw.mainImage ??
+  raw.thumbnail ??
+  raw.photo ??
+  raw.picture ??
+  raw.imageUrl
 
-  let imageUrl = pickMediaUrl(candidate) || '/placeholder.jpg'
+let imageUrl =
+  pickMediaUrl(candidate) ||
+  (Array.isArray(raw.image) ? withApiUrl(raw.image?.[0]?.url) : null) ||
+  '/placeholder.jpg'
+
+  function pickMediaUrl(anyMedia: any): string | null {
+  if (!anyMedia) return null
+
+  // строка
+  if (typeof anyMedia === 'string') return withApiUrl(anyMedia)
+
+  // объект с url
+  if (typeof anyMedia?.url === 'string') return withApiUrl(anyMedia.url)
+
+  // Strapi v4: { data: ... }
+  const data = anyMedia?.data ?? anyMedia
+
+  // массив (Strapi v5 может отдавать image: [ {url, formats...} ])
+  if (Array.isArray(data)) {
+    const first = data[0]
+    const u =
+      first?.url || // ✅ твой случай
+      first?.attributes?.url || // v4 style
+      first?.formats?.thumbnail?.url ||
+      first?.attributes?.formats?.thumbnail?.url
+    return withApiUrl(u)
+  }
+
+  // объект (single media)
+  const u =
+    data?.url || // ✅ если вдруг single v5
+    data?.attributes?.url || // v4
+    data?.formats?.thumbnail?.url ||
+    data?.attributes?.formats?.thumbnail?.url
+
+  return withApiUrl(u)
+}
 
   // category slug
   let categorySlug = ''
