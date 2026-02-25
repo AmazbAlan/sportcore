@@ -1,6 +1,8 @@
 import path from 'path';
 
 export default ({ env }) => {
+  // В проде (Railway) ты ставишь DATABASE_CLIENT=postgres,
+  // поэтому Strapi будет использовать postgres.
   const client = env('DATABASE_CLIENT', 'sqlite');
 
   const connections = {
@@ -23,15 +25,11 @@ export default ({ env }) => {
       pool: { min: env.int('DATABASE_POOL_MIN', 2), max: env.int('DATABASE_POOL_MAX', 10) },
     },
 
+    // ✅ Railway/Postgres: используем ТОЛЬКО DATABASE_URL
     postgres: {
       connection: {
-        connectionString: env('DATABASE_URL'), // если ты захочешь использовать одну строку
-        host: env('DATABASE_HOST', 'localhost'),
-        port: env.int('DATABASE_PORT', 5432),
-        database: env('DATABASE_NAME', 'strapi'),
-        user: env('DATABASE_USERNAME', 'strapi'),
-        password: env('DATABASE_PASSWORD', 'strapi'),
-        ssl: env.bool('DATABASE_SSL', false) && {
+        connectionString: env('DATABASE_URL'),
+        ssl: env.bool('DATABASE_SSL', true) && {
           rejectUnauthorized: env.bool('DATABASE_SSL_REJECT_UNAUTHORIZED', false),
         },
         schema: env('DATABASE_SCHEMA', 'public'),
