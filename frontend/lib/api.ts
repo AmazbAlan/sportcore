@@ -78,11 +78,8 @@ function withApiUrl(url?: string | null): string | null {
  */
 function productPopulateQuery(): URLSearchParams {
   const qp = new URLSearchParams()
-  qp.set('populate[image]', 'true')
-  qp.set('populate[category]', 'true')
-  qp.set('populate[variants]', 'true')
-  qp.set('populate[variants][populate][color]', 'true')
-  qp.set('populate[variants][populate][color][populate][image]', 'true')
+  // временно для диагностики — подтянет все вложенные связи/медиа
+  qp.set('populate', 'deep,5')
   return qp
 }
 
@@ -199,6 +196,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
   const url = `${API_URL}/api/products?${qp.toString()}`
   const resp = await fetchJSON<StrapiListResponse<any>>(url)
   if (!resp.data.length) return null
+  console.log('STRAPI RAW PRODUCT:', JSON.stringify(resp.data[0], null, 2))
   return flattenProduct(resp.data[0])
 }
 
