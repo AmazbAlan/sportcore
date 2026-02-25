@@ -6,9 +6,23 @@ module.exports = [
       contentSecurityPolicy: {
         useDefaults: true,
         directives: {
-          'img-src': ["'self'", 'data:', 'blob:', 'https://res.cloudinary.com'],
-          'media-src': ["'self'", 'data:', 'blob:', 'https://res.cloudinary.com'],
-          'connect-src': ["'self'", 'https:'],
+          'default-src': ["'self'"],
+          'img-src': [
+            "'self'",
+            'data:',
+            'blob:',
+            'https://res.cloudinary.com',
+            'https://*.cloudinary.com',
+          ],
+          'media-src': [
+            "'self'",
+            'data:',
+            'blob:',
+            'https://res.cloudinary.com',
+            'https://*.cloudinary.com',
+          ],
+          'connect-src': ["'self'", 'https:', 'http:'],
+          'frame-src': ["'self'"],
         },
       },
     },
@@ -16,7 +30,10 @@ module.exports = [
   {
     name: 'strapi::cors',
     config: {
-      origin: ['*'],
+      origin: [
+        'https://ТВОЙФРОНТЕНД.com',
+        'https://api.ТВОЙДОМЕН.com',
+      ],
       credentials: true,
     },
   },
