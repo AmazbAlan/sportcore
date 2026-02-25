@@ -79,11 +79,10 @@ function withApiUrl(url?: string | null): string | null {
 function productPopulateQuery(): URLSearchParams {
   const qp = new URLSearchParams()
 
-  // ✅ надежнее, чем true
   qp.set('populate[image]', '*')
   qp.set('populate[category]', '*')
 
-  // variants + вложенности
+  // components
   qp.set('populate[variants]', '*')
   qp.set('populate[variants][populate][color]', '*')
   qp.set('populate[variants][populate][color][populate][image]', '*')
