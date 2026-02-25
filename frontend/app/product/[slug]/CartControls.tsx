@@ -8,16 +8,43 @@ interface CartControlsProps {
   product: Product
 }
 
-// ✅ Базовый URL Strapi (должен быть задан на Vercel/Railway как NEXT_PUBLIC_STRAPI_URL)
-const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337'
+// ✅ Базовый URL Strapi (на проде должен быть NEXT_PUBLIC_STRAPI_URL)
+const STRAPI_URL =
+  process.env.NEXT_PUBLIC_STRAPI_URL || 'https://sportcore-production.up.railway.app'
 
-// ✅ Превращаем относительный url (/uploads/...) в абсолютный (https://.../uploads/...)
+// ✅ Превращаем относительный url (/uploads/...) в абсолютный
 function toAbsoluteUrl(url?: string | null) {
   if (!url) return ''
   if (url.startsWith('http://') || url.startsWith('https://')) return url
-  // на случай если url без слеша
   if (!url.startsWith('/')) return `${STRAPI_URL}/${url}`
   return `${STRAPI_URL}${url}`
+}
+
+// ✅ Достаём url из любых форматов Strapi media
+function getStrapiMediaUrl(media: any): string {
+  if (!media) return ''
+
+  // 1) твой формат: [{ url: "..." }]
+  if (Array.isArray(media) && media[0]?.url) {
+    return toAbsoluteUrl(media[0].url)
+  }
+
+  // 2) Strapi multiple: { data: [{ attributes: { url } }] }
+  if (Array.isArray(media?.data) && media.data[0]?.attributes?.url) {
+    return toAbsoluteUrl(media.data[0].attributes.url)
+  }
+
+  // 3) Strapi single: { data: { attributes: { url } } }
+  if (media?.data?.attributes?.url) {
+    return toAbsoluteUrl(media.data.attributes.url)
+  }
+
+  // 4) если вдруг уже строка
+  if (typeof media === 'string') {
+    return toAbsoluteUrl(media)
+  }
+
+  return ''
 }
 
 export default function CartControls({ product }: CartControlsProps) {
@@ -106,8 +133,8 @@ export default function CartControls({ product }: CartControlsProps) {
               <span className="font-medium block mb-2">Цвет:</span>
               <div className="flex flex-wrap gap-3">
                 {variant.color.map((c: VariantColor) => {
-                  // ✅ абсолютный URL для Strapi media
-                  const imageUrl = toAbsoluteUrl(c.image?.[0]?.url)
+                  // ✅ теперь вытаскиваем url независимо от формата Strapi
+                  const imageUrl = getStrapiMediaUrl((c as any).image)
 
                   return (
                     <button
