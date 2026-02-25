@@ -69,61 +69,93 @@ function withApiUrl(url?: string | null): string | null {
 }
 
 /**
- * Strapi-safe populate для продуктов:
- * - image
- * - category
- * - variants
- * - variants.color
+ * Достаём URL медиа максимально “толерантно”:
+ * - Strapi v4: { data: { attributes: { url } } }
+ * - Strapi multiple: { data: [ { attributes: { url } } ] }
+ * - иногда просто { url: "/uploads/.." }
+ * - иногда уже строка в imageUrl
+ */
+function pickMediaUrl(anyMedia: any): string | null {
+  if (!anyMedia) return null
+
+  // если уже строка
+  if (typeof anyMedia === 'string') return withApiUrl(anyMedia)
+
+  // если объект с url
+  if (typeof anyMedia?.url === 'string') return withApiUrl(anyMedia.url)
+
+  const data = anyMedia?.data ?? anyMedia
+
+  // multiple media
+  if (Array.isArray(data)) {
+    const u =
+      data?.[0]?.attributes?.url ||
+      data?.[0]?.url ||
+      data?.[0]?.formats?.thumbnail?.url
+    return withApiUrl(u)
+  }
+
+  // single media
+  const u =
+    data?.attributes?.url ||
+    data?.url ||
+    data?.attributes?.formats?.thumbnail?.url ||
+    data?.formats?.thumbnail?.url
+
+  return withApiUrl(u)
+}
+
+/**
+ * populate для Strapi:
+ * - image (media)
+ * - category (relation)
+ * - variants (component/relation)
+ * - variants.color (component)
  * - variants.color.image (media)
+ *
+ * ВАЖНО: самый надёжный вариант — populate=*
+ * (если будет тяжело по весу — потом ужмём)
  */
 function productPopulateQuery(): URLSearchParams {
   const qp = new URLSearchParams()
 
-  // ✅ MAIN IMAGE (media)
-  qp.set('populate[image][fields][0]', 'url')
-  qp.set('populate[image][fields][1]', 'formats')
+  // Надёжно. Если боишься веса — потом оптимизируем точечно.
+  qp.set('populate', '*')
 
-  // ✅ CATEGORY (relation)
-  qp.set('populate[category][fields][0]', 'slug')
-  qp.set('populate[category][fields][1]', 'name')
-
-  // ✅ VARIANTS (repeatable component)
-  qp.set('populate[variants]', 'true')
-
-  // ✅ COLOR inside VARIANTS (repeatable component)
-  qp.set('populate[variants][populate][color]', 'true')
-
-  // ✅ IMAGE inside COLOR (multiple media)
-  qp.set('populate[variants][populate][color][populate][image][fields][0]', 'url')
-  qp.set('populate[variants][populate][color][populate][image][fields][1]', 'formats')
+  // Если вдруг Strapi не “углубляет” внутри компонентов, добавим deep populate путями:
+  qp.set('populate[variants][populate][color][populate][image]', '*')
+  qp.set('populate[image]', '*')
+  qp.set('populate[category]', '*')
 
   return qp
 }
 
 function flattenProduct(entry: any): Product {
-  const raw = entry.attributes ?? entry
+  const raw = entry?.attributes ?? entry ?? {}
 
-  const slug = raw.slug ?? entry.slug ?? ''
-  const title = raw.title ?? entry.title ?? ''
-  const price = Number(raw.price ?? entry.price ?? 0)
+  const slug = raw.slug ?? entry?.slug ?? ''
+  const title = raw.title ?? entry?.title ?? ''
+  const price = Number(raw.price ?? entry?.price ?? 0)
 
-  // product image
-  let imageUrl = '/placeholder.jpg'
-  const imgData = raw.image?.data
-  if (Array.isArray(imgData)) {
-    const u = withApiUrl(imgData[0]?.attributes?.url)
-    if (u) imageUrl = u
-  } else if (imgData?.attributes?.url) {
-    const u = withApiUrl(imgData.attributes.url)
-    if (u) imageUrl = u
-  }
+  // 1) Пробуем найти картинку в разных полях
+  //    (часто в проектах поле называют images или imageUrl)
+  const candidate =
+    raw.image ??
+    raw.images ??
+    raw.mainImage ??
+    raw.thumbnail ??
+    raw.photo ??
+    raw.picture ??
+    raw.imageUrl // если это строка — pickMediaUrl тоже отработает
+
+  let imageUrl = pickMediaUrl(candidate) || '/placeholder.jpg'
 
   // category slug
   let categorySlug = ''
   if (raw.category?.data?.attributes?.slug) {
     categorySlug = raw.category.data.attributes.slug
-  } else if (entry.category?.slug) {
-    categorySlug = entry.category.slug
+  } else if (raw.category?.slug) {
+    categorySlug = raw.category.slug
   }
 
   const description: RichTextBlock[] = raw.description ?? []
@@ -134,13 +166,15 @@ function flattenProduct(entry: any): Product {
           ? v.color.map((c: any) => {
               const name = c?.name ?? ''
 
-              const mediaData = c?.image?.data
+              const mediaCandidate = c?.image ?? c?.images ?? null
+              const mediaData = mediaCandidate?.data ?? mediaCandidate
+
               const urls: string[] = Array.isArray(mediaData)
                 ? mediaData
-                    .map((m: any) => withApiUrl(m?.attributes?.url))
-                    .filter((u: any): u is string => Boolean(u))
-                : mediaData?.attributes?.url
-                ? [withApiUrl(mediaData.attributes.url)].filter(
+                    .map((m: any) => pickMediaUrl(m))
+                    .filter((u): u is string => Boolean(u))
+                : mediaData
+                ? [pickMediaUrl(mediaCandidate)].filter(
                     (u): u is string => Boolean(u)
                   )
                 : []
@@ -156,7 +190,7 @@ function flattenProduct(entry: any): Product {
 
         return {
           id: Number(v?.id ?? 0),
-          size: (v?.size ?? '') as string,
+          size: String(v?.size ?? ''),
           stock: Number(v?.stock ?? 0),
           color: colors.length ? colors : undefined,
         }
@@ -164,7 +198,7 @@ function flattenProduct(entry: any): Product {
     : []
 
   return {
-    id: Number(entry.id),
+    id: Number(entry?.id ?? raw?.id ?? 0),
     slug,
     title,
     price,
@@ -245,16 +279,9 @@ export async function getAllCategories(): Promise<Category[]> {
 
   return resp.data.map((entry) => {
     const raw = entry.attributes ?? entry
-    const imgData = raw.image?.data
-
-    let imageUrl = '/placeholder-category.jpg'
-    if (Array.isArray(imgData) && imgData[0]?.attributes?.url) {
-      const u = withApiUrl(imgData[0].attributes.url)
-      if (u) imageUrl = u
-    } else if (imgData?.attributes?.url) {
-      const u = withApiUrl(imgData.attributes.url)
-      if (u) imageUrl = u
-    }
+    const imageUrl =
+      pickMediaUrl(raw.image ?? raw.imageUrl ?? raw.images) ||
+      '/placeholder-category.jpg'
 
     return {
       name: raw.name ?? '',
@@ -274,16 +301,9 @@ export async function getBannerCategories(): Promise<BannerCategory[]> {
 
   return resp.data.map((entry) => {
     const raw = entry.attributes ?? entry
-    const imgData = raw.image?.data
-
-    let imageUrl = '/placeholder-category.jpg'
-    if (Array.isArray(imgData) && imgData[0]?.attributes?.url) {
-      const u = withApiUrl(imgData[0].attributes.url)
-      if (u) imageUrl = u
-    } else if (imgData?.attributes?.url) {
-      const u = withApiUrl(imgData.attributes.url)
-      if (u) imageUrl = u
-    }
+    const imageUrl =
+      pickMediaUrl(raw.image ?? raw.imageUrl ?? raw.images) ||
+      '/placeholder-category.jpg'
 
     return {
       name: raw.name ?? '',
@@ -303,16 +323,9 @@ export async function getNonBannerCategories(): Promise<BannerCategory[]> {
 
   return resp.data.map((entry) => {
     const raw = entry.attributes ?? entry
-    const imgData = raw.image?.data
-
-    let imageUrl = '/placeholder.jpg'
-    if (Array.isArray(imgData) && imgData[0]?.attributes?.url) {
-      const u = withApiUrl(imgData[0].attributes.url)
-      if (u) imageUrl = u
-    } else if (imgData?.attributes?.url) {
-      const u = withApiUrl(imgData.attributes.url)
-      if (u) imageUrl = u
-    }
+    const imageUrl =
+      pickMediaUrl(raw.image ?? raw.imageUrl ?? raw.images) ||
+      '/placeholder-category.jpg'
 
     return {
       name: raw.name ?? '',

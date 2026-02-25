@@ -15,6 +15,9 @@ module.exports = [
             'blob:',
             'https://res.cloudinary.com',
             'https://*.cloudinary.com',
+            'https://sportcore.kg',
+            'https://www.sportcore.kg',
+            'https://sportcore-production.up.railway.app',
           ],
 
           'media-src': [
@@ -23,6 +26,9 @@ module.exports = [
             'blob:',
             'https://res.cloudinary.com',
             'https://*.cloudinary.com',
+            'https://sportcore.kg',
+            'https://www.sportcore.kg',
+            'https://sportcore-production.up.railway.app',
           ],
 
           'connect-src': [
@@ -38,14 +44,16 @@ module.exports = [
   },
 
   {
-    name: 'strapi::cors',
-    config: {
-      origin: [
-        'https://sportcore-production.up.railway.app',
-      ],
-      credentials: true,
-    },
+  name: 'strapi::cors',
+  config: {
+    origin: [
+      'https://sportcore.kg',
+      'https://www.sportcore.kg',
+      'https://sportcore-production.up.railway.app',
+    ],
+    credentials: true,
   },
+},
 
   'strapi::poweredBy',
   'strapi::logger',
