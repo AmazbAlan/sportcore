@@ -79,13 +79,23 @@ function withApiUrl(url?: string | null): string | null {
 function productPopulateQuery(): URLSearchParams {
   const qp = new URLSearchParams()
 
-  qp.set('populate[image]', '*')
-  qp.set('populate[category]', '*')
+  // ✅ MAIN IMAGE (media)
+  qp.set('populate[image][fields][0]', 'url')
+  qp.set('populate[image][fields][1]', 'formats')
 
-  // components
-  qp.set('populate[variants]', '*')
-  qp.set('populate[variants][populate][color]', '*')
-  qp.set('populate[variants][populate][color][populate][image]', '*')
+  // ✅ CATEGORY (relation)
+  qp.set('populate[category][fields][0]', 'slug')
+  qp.set('populate[category][fields][1]', 'name')
+
+  // ✅ VARIANTS (repeatable component)
+  qp.set('populate[variants]', 'true')
+
+  // ✅ COLOR inside VARIANTS (repeatable component)
+  qp.set('populate[variants][populate][color]', 'true')
+
+  // ✅ IMAGE inside COLOR (multiple media)
+  qp.set('populate[variants][populate][color][populate][image][fields][0]', 'url')
+  qp.set('populate[variants][populate][color][populate][image][fields][1]', 'formats')
 
   return qp
 }
