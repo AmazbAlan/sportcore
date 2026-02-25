@@ -1,4 +1,9 @@
-const API_URL = process.env.STRAPI_URL || 'http://localhost:1337'
+// frontend/lib/api.ts
+
+const API_URL =
+  process.env.NEXT_PUBLIC_STRAPI_URL ||
+  process.env.STRAPI_URL ||
+  'http://localhost:1337'
 
 export type RichTextBlock = {
   children: { text: string }[]
@@ -60,7 +65,7 @@ async function fetchJSON<T>(url: string): Promise<T> {
 function withApiUrl(url?: string | null): string | null {
   if (!url) return null
   if (url.startsWith('http://') || url.startsWith('https://')) return url
-  return `${API_URL}${url}`
+  return `${API_URL}${url.startsWith('/') ? '' : '/'}${url}`
 }
 
 /**
@@ -73,11 +78,16 @@ function withApiUrl(url?: string | null): string | null {
  */
 function productPopulateQuery(): URLSearchParams {
   const qp = new URLSearchParams()
-  qp.set('populate[image]', 'true')
-  qp.set('populate[category]', 'true')
-  qp.set('populate[variants]', 'true')
-  qp.set('populate[variants][populate][color]', 'true')
-  qp.set('populate[variants][populate][color][populate][image]', 'true')
+
+  // ✅ надежнее, чем true
+  qp.set('populate[image]', '*')
+  qp.set('populate[category]', '*')
+
+  // variants + вложенности
+  qp.set('populate[variants]', '*')
+  qp.set('populate[variants][populate][color]', '*')
+  qp.set('populate[variants][populate][color][populate][image]', '*')
+
   return qp
 }
 
@@ -121,7 +131,9 @@ function flattenProduct(entry: any): Product {
                     .map((m: any) => withApiUrl(m?.attributes?.url))
                     .filter((u: any): u is string => Boolean(u))
                 : mediaData?.attributes?.url
-                ? [withApiUrl(mediaData.attributes.url)].filter((u): u is string => Boolean(u))
+                ? [withApiUrl(mediaData.attributes.url)].filter(
+                    (u): u is string => Boolean(u)
+                  )
                 : []
 
               const images: Media[] = urls.map((u) => ({ url: u }))
@@ -130,7 +142,6 @@ function flattenProduct(entry: any): Product {
                 name,
                 image: images.length ? images : undefined,
               }
-
             })
           : []
 
@@ -164,7 +175,10 @@ export async function getAllProducts(): Promise<Product[]> {
   return resp.data.map(flattenProduct)
 }
 
-export async function getProductsByCategory(slug: string, maxPrice?: number): Promise<Product[]> {
+export async function getProductsByCategory(
+  slug: string,
+  maxPrice?: number
+): Promise<Product[]> {
   const qp = productPopulateQuery()
   qp.set('filters[category][slug][$eq]', slug)
   if (maxPrice !== undefined) qp.set('filters[price][$lte]', String(maxPrice))
@@ -188,9 +202,15 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
   qp.set('filters[slug][$eq]', slug)
 
   const url = `${API_URL}/api/products?${qp.toString()}`
-  const resp = await fetchJSON<StrapiListResponse<any>>(url)
-  if (!resp.data.length) return null
-  return flattenProduct(resp.data[0])
+
+  try {
+    const resp = await fetchJSON<StrapiListResponse<any>>(url)
+    if (!resp.data.length) return null
+    return flattenProduct(resp.data[0])
+  } catch (err) {
+    console.error('Ошибка получения товара по slug:', err)
+    return null
+  }
 }
 
 export async function getFeaturedProducts(): Promise<Product[]> {
