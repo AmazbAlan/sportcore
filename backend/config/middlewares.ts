@@ -1,10 +1,22 @@
 module.exports = [
   'strapi::errors',
-  'strapi::security',
+  {
+    name: 'strapi::security',
+    config: {
+      contentSecurityPolicy: {
+        useDefaults: true,
+        directives: {
+          'img-src': ["'self'", 'data:', 'blob:', 'https://res.cloudinary.com'],
+          'media-src': ["'self'", 'data:', 'blob:', 'https://res.cloudinary.com'],
+          'connect-src': ["'self'", 'https:'],
+        },
+      },
+    },
+  },
   {
     name: 'strapi::cors',
     config: {
-      origin: ['http://localhost:3000'], // укажи адрес твоего фронтенда
+      origin: ['*'],
       credentials: true,
     },
   },
