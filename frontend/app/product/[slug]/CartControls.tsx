@@ -8,6 +8,18 @@ interface CartControlsProps {
   product: Product
 }
 
+// ✅ Базовый URL Strapi (должен быть задан на Vercel/Railway как NEXT_PUBLIC_STRAPI_URL)
+const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337'
+
+// ✅ Превращаем относительный url (/uploads/...) в абсолютный (https://.../uploads/...)
+function toAbsoluteUrl(url?: string | null) {
+  if (!url) return ''
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+  // на случай если url без слеша
+  if (!url.startsWith('/')) return `${STRAPI_URL}/${url}`
+  return `${STRAPI_URL}${url}`
+}
+
 export default function CartControls({ product }: CartControlsProps) {
   const { add } = useCart()
 
@@ -18,7 +30,7 @@ export default function CartControls({ product }: CartControlsProps) {
 
   // при смене товара сразу выбираем первый вариант
   useEffect(() => {
-    const v = product.variants[0] ?? null
+    const v = product.variants?.[0] ?? null
     setVariant(v)
     setColor(v?.color?.[0] ?? null)
     setQty(1)
@@ -51,7 +63,7 @@ export default function CartControls({ product }: CartControlsProps) {
           slug: product.slug,
           title: `${product.title} (${variant.size}, ${color.name})`,
           price: product.price,
-          color: color.name, // ⚠️ нужно чтобы CartItem поддерживал color?: string
+          color: color.name,
         },
         qty
       )
@@ -93,8 +105,9 @@ export default function CartControls({ product }: CartControlsProps) {
             <div>
               <span className="font-medium block mb-2">Цвет:</span>
               <div className="flex flex-wrap gap-3">
-                {variant.color.map((c: VariantColor, idx: number) => {
-                  const imageUrl = c.image?.[0]?.url
+                {variant.color.map((c: VariantColor) => {
+                  // ✅ абсолютный URL для Strapi media
+                  const imageUrl = toAbsoluteUrl(c.image?.[0]?.url)
 
                   return (
                     <button
@@ -113,6 +126,7 @@ export default function CartControls({ product }: CartControlsProps) {
                           src={imageUrl}
                           alt={c.name}
                           className="w-full h-full object-cover"
+                          loading="lazy"
                         />
                       ) : (
                         <span className="w-full h-full bg-gray-300" />
