@@ -50,13 +50,10 @@ export default function CartPage() {
                   <table className="w-full text-left table-fixed">
                     <thead className="bg-slate-50">
                       <tr className="text-sm text-slate-600">
-                        {/* Товар — занимает остаток */}
                         <th className="px-6 py-4 font-semibold">Товар</th>
-
-                        {/* Фикс-ширины */}
                         <th className="px-6 py-4 font-semibold w-[140px]">Размер</th>
                         <th className="px-6 py-4 font-semibold w-[130px]">Цена</th>
-                        <th className="px-6 py-4 font-semibold w-[200px]">Кол-во</th>
+                        <th className="px-6 py-4 font-semibold w-[120px]">Кол-во</th>
                         <th className="px-6 py-4 font-semibold w-[140px] text-right">Сумма</th>
                         <th className="px-6 py-4 w-[72px]"></th>
                       </tr>
@@ -70,19 +67,18 @@ export default function CartPage() {
 
                         return (
                           <tr key={i.id} className="align-top">
-                            {/* Товар */}
                             <td className="px-6 py-5">
                               <div className="min-w-0">
                                 <Link
                                   href={`/product/${i.slug}`}
                                   className="font-semibold text-slate-900 hover:underline block"
                                 >
-                                  <span className="line-clamp-2">{name}</span>
+                                  {/* без line-clamp чтобы не требовать плагин */}
+                                  <span className="block truncate">{name}</span>
                                 </Link>
                               </div>
                             </td>
 
-                            {/* Размер */}
                             <td className="px-6 py-5 text-slate-700">
                               {size ? (
                                 <span className="inline-flex rounded-full bg-slate-100 border border-slate-200 px-3 py-1 text-sm">
@@ -93,53 +89,30 @@ export default function CartPage() {
                               )}
                             </td>
 
-                            {/* Цена */}
                             <td className="px-6 py-5 text-slate-700 whitespace-nowrap">
                               {formatSom(i.price)} сом
                             </td>
 
-                            {/* Кол-во */}
+                            {/* Количество: только input, без + и - */}
                             <td className="px-6 py-5">
-                              <div className="inline-flex items-center gap-2 whitespace-nowrap">
-                                <button
-                                  type="button"
-                                  onClick={() => update(i.id, Math.max(1, i.qty - 1))}
-                                  className="shrink-0 h-8 w-8 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 transition"
-                                  aria-label="Уменьшить количество"
-                                >
-                                  −
-                                </button>
-
-                                <input
-                                  type="number"
-                                  min={1}
-                                  value={i.qty}
-                                  onChange={(e) => update(i.id, Math.max(1, Number(e.target.value)))}
-                                  className="shrink-0 h-8 w-14 rounded-lg border border-slate-300 px-2 text-center outline-none
-                                             focus:border-slate-400 focus:ring-4 focus:ring-slate-100"
-                                />
-
-                                <button
-                                  type="button"
-                                  onClick={() => update(i.id, i.qty + 1)}
-                                  className="shrink-0 h-8 w-8 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 transition"
-                                  aria-label="Увеличить количество"
-                                >
-                                  +
-                                </button>
-                              </div>
+                              <input
+                                type="number"
+                                min={1}
+                                value={i.qty}
+                                onChange={(e) => update(i.id, Math.max(1, Number(e.target.value)))}
+                                className="h-9 w-20 rounded-lg border border-slate-300 px-3 text-center outline-none
+                                           focus:border-slate-400 focus:ring-4 focus:ring-slate-100"
+                              />
                             </td>
 
-                            {/* Сумма */}
                             <td className="px-6 py-5 text-right font-semibold text-slate-900 whitespace-nowrap">
                               {formatSom(i.price * i.qty)} сом
                             </td>
 
-                            {/* Удалить */}
                             <td className="px-6 py-5 text-right">
                               <button
                                 onClick={() => remove(i.id)}
-                                className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition"
+                                className="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition"
                                 aria-label="Удалить"
                                 title="Удалить"
                               >
@@ -197,33 +170,13 @@ export default function CartPage() {
 
                         <div className="mt-3 flex items-center justify-between">
                           <div className="text-sm text-slate-500">Количество</div>
-                          <div className="inline-flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => update(i.id, Math.max(1, i.qty - 1))}
-                              className="h-9 w-9 rounded-lg border border-slate-300 bg-white"
-                              aria-label="Уменьшить количество"
-                            >
-                              −
-                            </button>
-
-                            <input
-                              type="number"
-                              min={1}
-                              value={i.qty}
-                              onChange={(e) => update(i.id, Math.max(1, Number(e.target.value)))}
-                              className="h-9 w-16 rounded-lg border border-slate-300 px-2 text-center outline-none"
-                            />
-
-                            <button
-                              type="button"
-                              onClick={() => update(i.id, i.qty + 1)}
-                              className="h-9 w-9 rounded-lg border border-slate-300 bg-white"
-                              aria-label="Увеличить количество"
-                            >
-                              +
-                            </button>
-                          </div>
+                          <input
+                            type="number"
+                            min={1}
+                            value={i.qty}
+                            onChange={(e) => update(i.id, Math.max(1, Number(e.target.value)))}
+                            className="h-10 w-24 rounded-lg border border-slate-300 px-3 text-center outline-none"
+                          />
                         </div>
                       </div>
                     )
