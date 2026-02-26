@@ -21,7 +21,7 @@ export default function CheckoutPage() {
 
   const canSubmit =
     items.length > 0 &&
-    name.trim().length >= 1 &&
+    name.trim().length >= 2 &&
     address.trim().length >= 4 &&
     !isSubmitting
 
@@ -56,26 +56,22 @@ export default function CheckoutPage() {
       ]
 
       const text = encodeURIComponent(lines.join('\n'))
-console.log('CHECKOUT ITEMS:', items)
-      const res = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          customer: { name: name.trim(), phone: phone.trim(), address: address.trim() },
-          items,
-          total: totalValue,
-        }),
-      })
 
-      if (!res.ok) {
-        // чтобы не было “тихих” падений
-        throw new Error(`Ошибка оформления (${res.status}).`)
-      }
+      // НЕ даём API сломать WhatsApp: если упадёт — всё равно откроем WA
+      try {
+        await fetch('/api/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customer: { name: name.trim(), phone: phone.trim(), address: address.trim() },
+            items,
+            total: totalValue,
+          }),
+        })
+      } catch (_) {}
 
-      // очищаем корзину только если всё успешно
       clear()
 
-      // редирект в WhatsApp
       window.location.href = `https://wa.me/+996774231202/?text=${text}`
     } catch (e: any) {
       setError(e?.message || 'Не удалось оформить заказ. Попробуй ещё раз.')
@@ -95,7 +91,7 @@ console.log('CHECKOUT ITEMS:', items)
                   Оформление заказа
                 </h1>
                 <p className="mt-1 text-slate-500">
-                  Заполни данные - мы откроем WhatsApp с готовым заказом.
+                  Заполни данные — мы откроем WhatsApp с готовым заказом.
                 </p>
               </div>
 
@@ -180,13 +176,13 @@ console.log('CHECKOUT ITEMS:', items)
           </section>
 
           {/* Сайдбар / Итог */}
-          <aside className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 h-fit">
+          <aside className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 h-fit lg:sticky lg:top-6">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-slate-900">Ваш заказ</h2>
               <span className="text-sm text-slate-500">{items.length} поз.</span>
             </div>
 
-            <div className="mt-4 space-y-3">
+            <div className="mt-4 space-y-3 max-h-[45vh] overflow-auto pr-1">
               {items.length === 0 ? (
                 <div className="rounded-xl bg-slate-50 border border-slate-200 p-4 text-slate-600">
                   Корзина пустая.
@@ -197,13 +193,18 @@ console.log('CHECKOUT ITEMS:', items)
                     key={i.id ?? i.slug ?? i.title}
                     className="flex items-start justify-between gap-3 rounded-xl border border-slate-200 p-4"
                   >
-                    <div className="min-w-0">
-                      <div className="font-medium text-slate-900 truncate">{i.title}</div>
-                      <div className="text-sm text-slate-500">
+                    <div className="min-w-0 flex-1">
+                      {/* В 2 строки, чтобы не ломало мобилку */}
+                      <div className="text-slate-900 font-medium overflow-hidden text-ellipsis line-clamp-2">
+                        {i.title}
+                      </div>
+
+                      <div className="mt-1 text-sm text-slate-500 truncate">
                         {i.qty} × {formatSom(i.price)} сом
                       </div>
                     </div>
-                    <div className="font-semibold text-slate-900">
+
+                    <div className="shrink-0 whitespace-nowrap font-semibold text-slate-900">
                       {formatSom(i.price * i.qty)} сом
                     </div>
                   </div>
@@ -222,12 +223,6 @@ console.log('CHECKOUT ITEMS:', items)
           </aside>
         </div>
       </div>
-      
     </main>
   )
-}
-export async function POST(req: Request) {
-  const body = await req.json().catch(() => null)
-  console.log('BODY:', body)
-  return Response.json({ ok: true })
 }
