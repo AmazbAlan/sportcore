@@ -69,130 +69,84 @@ function withApiUrl(url?: string | null): string | null {
 }
 
 /**
- * Достаём URL медиа максимально “толерантно”:
- * - Strapi v4: { data: { attributes: { url } } }
- * - Strapi multiple: { data: [ { attributes: { url } } ] }
- * - иногда просто { url: "/uploads/.." }
- * - иногда уже строка в imageUrl
+ * Универсально достаём URL из media:
+ * - Strapi v5: [{ url, formats... }] или { url, ... }
+ * - Strapi v4: { data: { attributes: { url } } } / { data: [ ... ] }
+ * - иногда просто строка
  */
 function pickMediaUrl(anyMedia: any): string | null {
-  if (!anyMedia) return null
-
-  // если уже строка
-  if (typeof anyMedia === 'string') return withApiUrl(anyMedia)
-
-  // если объект с url
-  if (typeof anyMedia?.url === 'string') return withApiUrl(anyMedia.url)
-
-  const data = anyMedia?.data ?? anyMedia
-
-  // multiple media
-  if (Array.isArray(data)) {
-    const u =
-      data?.[0]?.attributes?.url ||
-      data?.[0]?.url ||
-      data?.[0]?.formats?.thumbnail?.url
-    return withApiUrl(u)
-  }
-
-  // single media
-  const u =
-    data?.attributes?.url ||
-    data?.url ||
-    data?.attributes?.formats?.thumbnail?.url ||
-    data?.formats?.thumbnail?.url
-
-  return withApiUrl(u)
-}
-
-/**
- * populate для Strapi:
- * - image (media)
- * - category (relation)
- * - variants (component/relation)
- * - variants.color (component)
- * - variants.color.image (media)
- *
- * ВАЖНО: самый надёжный вариант — populate=*
- * (если будет тяжело по весу — потом ужмём)
- */
-function productPopulateQuery(): URLSearchParams {
-  const qp = new URLSearchParams()
-
-  // Надёжно. Если боишься веса — потом оптимизируем точечно.
-  qp.set('populate', '*')
-
-  // Если вдруг Strapi не “углубляет” внутри компонентов, добавим deep populate путями:
-  qp.set('populate[variants][populate][color][populate][image]', '*')
-  qp.set('populate[image]', '*')
-  qp.set('populate[category]', '*')
-
-  return qp
-}
-
-function flattenProduct(entry: any): Product {
-  const raw = entry?.attributes ?? entry ?? {}
-
-  const slug = raw.slug ?? entry?.slug ?? ''
-  const title = raw.title ?? entry?.title ?? ''
-  const price = Number(raw.price ?? entry?.price ?? 0)
-
-  // 1) Пробуем найти картинку в разных полях
-  //    (часто в проектах поле называют images или imageUrl)
- const candidate =
-  raw.image ??
-  raw.images ??
-  raw.mainImage ??
-  raw.thumbnail ??
-  raw.photo ??
-  raw.picture ??
-  raw.imageUrl
-
-let imageUrl =
-  pickMediaUrl(candidate) ||
-  (Array.isArray(raw.image) ? withApiUrl(raw.image?.[0]?.url) : null) ||
-  '/placeholder.jpg'
-
-  function pickMediaUrl(anyMedia: any): string | null {
   if (!anyMedia) return null
 
   // строка
   if (typeof anyMedia === 'string') return withApiUrl(anyMedia)
 
-  // объект с url
+  // объект v5: { url: "https://..." }
   if (typeof anyMedia?.url === 'string') return withApiUrl(anyMedia.url)
 
-  // Strapi v4: { data: ... }
+  // v4: { data: ... }
   const data = anyMedia?.data ?? anyMedia
 
-  // массив (Strapi v5 может отдавать image: [ {url, formats...} ])
+  // массив (v5: image: [ { url } ])
   if (Array.isArray(data)) {
     const first = data[0]
     const u =
-      first?.url || // ✅ твой случай
-      first?.attributes?.url || // v4 style
+      first?.url ||
+      first?.attributes?.url ||
       first?.formats?.thumbnail?.url ||
       first?.attributes?.formats?.thumbnail?.url
     return withApiUrl(u)
   }
 
-  // объект (single media)
+  // объект (single)
   const u =
-    data?.url || // ✅ если вдруг single v5
-    data?.attributes?.url || // v4
+    data?.url ||
+    data?.attributes?.url ||
     data?.formats?.thumbnail?.url ||
     data?.attributes?.formats?.thumbnail?.url
 
   return withApiUrl(u)
 }
 
-  // category slug
+/**
+ * ТВОЙ Strapi валидатор ломает populate[variants][populate]...
+ * Самый совместимый способ: populate как массив строк + dot paths.
+ */
+function productPopulateQuery(): URLSearchParams {
+  const qp = new URLSearchParams()
+
+  qp.set('populate[0]', 'image')
+  qp.set('populate[1]', 'category')
+  qp.set('populate[2]', 'variants')
+  qp.set('populate[3]', 'variants.color')
+  qp.set('populate[4]', 'variants.color.image')
+
+  return qp
+}
+
+function flattenProduct(entry: any): Product {
+  // Strapi v5 в твоём ответе отдаёт поля прямо на entry
+  const raw = entry?.attributes ?? entry ?? {}
+
+  const slug = raw.slug ?? ''
+  const title = raw.title ?? ''
+  const price = Number(raw.price ?? 0)
+
+  // картинка товара в твоём API: image: [{ url: "https://..." }]
+  const candidate =
+    raw.image ??
+    raw.images ??
+    raw.mainImage ??
+    raw.thumbnail ??
+    raw.photo ??
+    raw.picture ??
+    raw.imageUrl
+
+  const imageUrl = pickMediaUrl(candidate) || '/placeholder.jpg'
+
+  // category slug (у тебя иногда null)
   let categorySlug = ''
-  if (raw.category?.data?.attributes?.slug) {
-    categorySlug = raw.category.data.attributes.slug
-  } else if (raw.category?.slug) {
-    categorySlug = raw.category.slug
-  }
+  if (raw.category?.data?.attributes?.slug) categorySlug = raw.category.data.attributes.slug
+  else if (raw.category?.slug) categorySlug = raw.category.slug
 
   const description: RichTextBlock[] = raw.description ?? []
 
@@ -200,26 +154,26 @@ let imageUrl =
     ? raw.variants.map((v: any) => {
         const colors: VariantColor[] = Array.isArray(v?.color)
           ? v.color.map((c: any) => {
-              const name = c?.name ?? ''
+              const name = String(c?.name ?? '')
 
+              // в твоём API c.image: [{ url: ... }]
               const mediaCandidate = c?.image ?? c?.images ?? null
-              const mediaData = mediaCandidate?.data ?? mediaCandidate
 
-              const urls: string[] = Array.isArray(mediaData)
-                ? mediaData
-                    .map((m: any) => pickMediaUrl(m))
-                    .filter((u): u is string => Boolean(u))
-                : mediaData
-                ? [pickMediaUrl(mediaCandidate)].filter(
-                    (u): u is string => Boolean(u)
-                  )
-                : []
+              let images: Media[] | undefined = undefined
 
-              const images: Media[] = urls.map((u) => ({ url: u }))
+              if (Array.isArray(mediaCandidate)) {
+                const urls = mediaCandidate
+                  .map((m: any) => pickMediaUrl(m))
+                  .filter((u): u is string => Boolean(u))
+                if (urls.length) images = urls.map((u) => ({ url: u }))
+              } else {
+                const u = pickMediaUrl(mediaCandidate)
+                if (u) images = [{ url: u }]
+              }
 
               return {
                 name,
-                image: images.length ? images : undefined,
+                image: images,
               }
             })
           : []
@@ -227,14 +181,14 @@ let imageUrl =
         return {
           id: Number(v?.id ?? 0),
           size: String(v?.size ?? ''),
-          stock: Number(v?.stock ?? 0),
+          stock: Number(v?.stock ?? 0), // ✅ stock у тебя иногда строкой
           color: colors.length ? colors : undefined,
         }
       })
     : []
 
   return {
-    id: Number(entry?.id ?? raw?.id ?? 0),
+    id: Number(raw?.id ?? entry?.id ?? 0),
     slug,
     title,
     price,
@@ -310,7 +264,7 @@ export async function getFeaturedProducts(): Promise<Product[]> {
 // ---------------- CATEGORIES ----------------
 
 export async function getAllCategories(): Promise<Category[]> {
-  const url = `${API_URL}/api/categories?populate=*`
+  const url = `${API_URL}/api/categories?populate[0]=image`
   const resp = await fetchJSON<StrapiListResponse<any>>(url)
 
   return resp.data.map((entry) => {
@@ -329,7 +283,7 @@ export async function getAllCategories(): Promise<Category[]> {
 
 export async function getBannerCategories(): Promise<BannerCategory[]> {
   const qp = new URLSearchParams()
-  qp.set('populate', '*')
+  qp.set('populate[0]', 'image')
   qp.set('filters[featured][$eq]', 'true')
 
   const url = `${API_URL}/api/categories?${qp.toString()}`
@@ -351,7 +305,7 @@ export async function getBannerCategories(): Promise<BannerCategory[]> {
 
 export async function getNonBannerCategories(): Promise<BannerCategory[]> {
   const qp = new URLSearchParams()
-  qp.set('populate', '*')
+  qp.set('populate[0]', 'image')
   qp.set('filters[featured][$eq]', 'false')
 
   const url = `${API_URL}/api/categories?${qp.toString()}`

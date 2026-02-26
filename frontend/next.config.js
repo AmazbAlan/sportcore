@@ -1,18 +1,25 @@
 // next.config.js
+/** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+
   images: {
     remotePatterns: [
+      // Cloudinary (твои картинки товаров/цветов)
       { protocol: 'https', hostname: 'res.cloudinary.com', pathname: '/**' },
 
+      // Strapi uploads (если вдруг отдаёшь не через Cloudinary)
       { protocol: 'https', hostname: 'sportcore-production.up.railway.app', pathname: '/uploads/**' },
+
+      // Local Strapi uploads
       { protocol: 'http', hostname: 'localhost', port: '1337', pathname: '/uploads/**' },
     ],
   },
-  env: {
-    NEXT_PUBLIC_STRAPI_URL: process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337',
-  },
-  typescript: { ignoreBuildErrors: true },
-};
 
-export default nextConfig;
+  // Лучше временно не игнорировать ошибки на проде, но оставляю как у тебя
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+}
+
+module.exports = nextConfig

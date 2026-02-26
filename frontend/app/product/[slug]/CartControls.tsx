@@ -8,45 +8,6 @@ interface CartControlsProps {
   product: Product
 }
 
-// ✅ Базовый URL Strapi (на проде должен быть NEXT_PUBLIC_STRAPI_URL)
-const STRAPI_URL =
-  process.env.NEXT_PUBLIC_STRAPI_URL || 'https://sportcore-production.up.railway.app'
-
-// ✅ Превращаем относительный url (/uploads/...) в абсолютный
-function toAbsoluteUrl(url?: string | null) {
-  if (!url) return ''
-  if (url.startsWith('http://') || url.startsWith('https://')) return url
-  if (!url.startsWith('/')) return `${STRAPI_URL}/${url}`
-  return `${STRAPI_URL}${url}`
-}
-
-// ✅ Достаём url из любых форматов Strapi media
-function getStrapiMediaUrl(media: any): string {
-  if (!media) return ''
-
-  // 1) твой формат: [{ url: "..." }]
-  if (Array.isArray(media) && media[0]?.url) {
-    return toAbsoluteUrl(media[0].url)
-  }
-
-  // 2) Strapi multiple: { data: [{ attributes: { url } }] }
-  if (Array.isArray(media?.data) && media.data[0]?.attributes?.url) {
-    return toAbsoluteUrl(media.data[0].attributes.url)
-  }
-
-  // 3) Strapi single: { data: { attributes: { url } } }
-  if (media?.data?.attributes?.url) {
-    return toAbsoluteUrl(media.data.attributes.url)
-  }
-
-  // 4) если вдруг уже строка
-  if (typeof media === 'string') {
-    return toAbsoluteUrl(media)
-  }
-
-  return ''
-}
-
 export default function CartControls({ product }: CartControlsProps) {
   const { add } = useCart()
 
@@ -64,7 +25,7 @@ export default function CartControls({ product }: CartControlsProps) {
     setLoading(false)
   }, [product])
 
-  const available = variant?.stock ?? 0
+  const available = Number(variant?.stock ?? 0)
   const outOfStock = available <= 0
 
   const handleVariantClick = (v: ProductVariant) => {
@@ -76,7 +37,7 @@ export default function CartControls({ product }: CartControlsProps) {
 
   const handleQtyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = parseInt(e.target.value, 10) || 1
-    setQty(Math.min(Math.max(1, v), available))
+    setQty(Math.min(Math.max(1, v), available || 1))
   }
 
   const handleAdd = useCallback(async () => {
@@ -109,21 +70,25 @@ export default function CartControls({ product }: CartControlsProps) {
           <div>
             <span className="font-medium block mb-2">Размер:</span>
             <div className="flex flex-wrap gap-2">
-              {product.variants.map((v) => (
-                <button
-                  key={v.id}
-                  onClick={() => handleVariantClick(v)}
-                  disabled={v.stock === 0 || loading}
-                  className={`
-                    flex flex-col items-center justify-center
-                    w-16 h-16 rounded-full border
-                    ${variant.id === v.id ? 'border-yellow-500' : 'border-gray-300'}
-                    ${v.stock === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:border-yellow-500'}
-                  `}
-                >
-                  <span className="text-sm font-medium">{v.size}</span>
-                </button>
-              ))}
+              {product.variants.map((v, idx) => {
+                const vStock = Number(v.stock ?? 0)
+                const isActive = variant.size === v.size && variant.id === v.id
+                return (
+                  <button
+                    key={`${v.id}-${v.size}-${idx}`}
+                    onClick={() => handleVariantClick(v)}
+                    disabled={vStock === 0 || loading}
+                    className={`
+                      flex flex-col items-center justify-center
+                      w-16 h-16 rounded-full border
+                      ${isActive ? 'border-yellow-500' : 'border-gray-300'}
+                      ${vStock === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:border-yellow-500'}
+                    `}
+                  >
+                    <span className="text-sm font-medium">{v.size}</span>
+                  </button>
+                )
+              })}
             </div>
           </div>
 
@@ -132,13 +97,12 @@ export default function CartControls({ product }: CartControlsProps) {
             <div>
               <span className="font-medium block mb-2">Цвет:</span>
               <div className="flex flex-wrap gap-3">
-                {variant.color.map((c: VariantColor) => {
-                  // ✅ теперь вытаскиваем url независимо от формата Strapi
-                  const imageUrl = getStrapiMediaUrl((c as any).image)
+                {variant.color.map((c, idx) => {
+                  const imageUrl = c.image?.[0]?.url ?? ''
 
                   return (
                     <button
-                      key={c.name}
+                      key={`${c.name}-${idx}`}
                       onClick={() => setColor(c)}
                       className={`
                         w-14 h-14 rounded-full border-2 overflow-hidden
@@ -147,6 +111,7 @@ export default function CartControls({ product }: CartControlsProps) {
                         hover:border-yellow-500
                       `}
                       title={c.name}
+                      type="button"
                     >
                       {imageUrl ? (
                         <img
@@ -184,12 +149,13 @@ export default function CartControls({ product }: CartControlsProps) {
               id="qty"
               type="number"
               min={1}
-              max={available}
+              max={available || 1}
               value={qty}
               onChange={handleQtyChange}
               disabled={outOfStock || loading}
               className="w-20 border rounded px-2 py-1"
             />
+            <span className="text-xs text-gray-500">макс: {available}</span>
           </div>
 
           {/* 5. Кнопка «В корзину» */}
@@ -206,6 +172,7 @@ export default function CartControls({ product }: CartControlsProps) {
               hover:scale-105
               active:scale-95 active:bg-yellow-600
             "
+            type="button"
           >
             {loading && (
               <span
