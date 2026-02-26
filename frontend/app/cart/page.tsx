@@ -11,9 +11,6 @@ function formatSom(n: number) {
 
 export default function CartPage() {
   const { items, update, remove, total } = useCart()
-  // если у тебя есть clear() — раскомментируй:
-  // const { clear } = useCart()
-
   const totalValue = total()
 
   return (
@@ -23,9 +20,7 @@ export default function CartPage() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Ваша корзина</h1>
-              <p className="mt-1 text-slate-500">
-                Проверьте товары и количество перед оформлением.
-              </p>
+              <p className="mt-1 text-slate-500">Проверьте товары и количество перед оформлением.</p>
             </div>
 
             <div className="hidden md:flex items-center gap-2">
@@ -55,12 +50,15 @@ export default function CartPage() {
                   <table className="w-full text-left table-fixed">
                     <thead className="bg-slate-50">
                       <tr className="text-sm text-slate-600">
+                        {/* Товар — занимает остаток */}
                         <th className="px-6 py-4 font-semibold">Товар</th>
-                        <th className="px-6 py-4 font-semibold">Размер</th>
-                        <th className="px-6 py-4 font-semibold">Цена</th>
-                        <th className="px-6 py-4 font-semibold">Кол-во</th>
-                        <th className="px-6 py-4 font-semibold text-right">Сумма</th>
-                        <th className="px-6 py-4"></th>
+
+                        {/* Фикс-ширины */}
+                        <th className="px-6 py-4 font-semibold w-[140px]">Размер</th>
+                        <th className="px-6 py-4 font-semibold w-[130px]">Цена</th>
+                        <th className="px-6 py-4 font-semibold w-[200px]">Кол-во</th>
+                        <th className="px-6 py-4 font-semibold w-[140px] text-right">Сумма</th>
+                        <th className="px-6 py-4 w-[72px]"></th>
                       </tr>
                     </thead>
 
@@ -72,20 +70,19 @@ export default function CartPage() {
 
                         return (
                           <tr key={i.id} className="align-top">
+                            {/* Товар */}
                             <td className="px-6 py-5">
                               <div className="min-w-0">
                                 <Link
                                   href={`/product/${i.slug}`}
-                                  className="font-semibold text-slate-900 hover:underline"
+                                  className="font-semibold text-slate-900 hover:underline block"
                                 >
-                                  {name}
+                                  <span className="line-clamp-2">{name}</span>
                                 </Link>
-                                <div className="mt-1 text-sm text-slate-500 truncate">
-                                  {i.slug}
-                                </div>
                               </div>
                             </td>
 
+                            {/* Размер */}
                             <td className="px-6 py-5 text-slate-700">
                               {size ? (
                                 <span className="inline-flex rounded-full bg-slate-100 border border-slate-200 px-3 py-1 text-sm">
@@ -96,49 +93,53 @@ export default function CartPage() {
                               )}
                             </td>
 
+                            {/* Цена */}
                             <td className="px-6 py-5 text-slate-700 whitespace-nowrap">
                               {formatSom(i.price)} сом
                             </td>
 
+                            {/* Кол-во */}
                             <td className="px-6 py-5">
-  <div className="inline-flex items-center gap-2 whitespace-nowrap">
-    <button
-      type="button"
-      onClick={() => update(i.id, Math.max(1, i.qty - 1))}
-      className="shrink-0 h-9 w-9 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 transition"
-      aria-label="Уменьшить количество"
-    >
-      −
-    </button>
+                              <div className="inline-flex items-center gap-2 whitespace-nowrap">
+                                <button
+                                  type="button"
+                                  onClick={() => update(i.id, Math.max(1, i.qty - 1))}
+                                  className="shrink-0 h-8 w-8 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 transition"
+                                  aria-label="Уменьшить количество"
+                                >
+                                  −
+                                </button>
 
-    <input
-      type="number"
-      min={1}
-      value={i.qty}
-      onChange={(e) => update(i.id, Math.max(1, Number(e.target.value)))}
-      className="shrink-0 h-9 w-16 rounded-lg border border-slate-300 px-2 text-center outline-none
-                 focus:border-slate-400 focus:ring-4 focus:ring-slate-100"
-    />
+                                <input
+                                  type="number"
+                                  min={1}
+                                  value={i.qty}
+                                  onChange={(e) => update(i.id, Math.max(1, Number(e.target.value)))}
+                                  className="shrink-0 h-8 w-14 rounded-lg border border-slate-300 px-2 text-center outline-none
+                                             focus:border-slate-400 focus:ring-4 focus:ring-slate-100"
+                                />
 
-    <button
-      type="button"
-      onClick={() => update(i.id, i.qty + 1)}
-      className="shrink-0 h-9 w-9 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 transition"
-      aria-label="Увеличить количество"
-    >
-      +
-    </button>
-  </div>
-</td>
+                                <button
+                                  type="button"
+                                  onClick={() => update(i.id, i.qty + 1)}
+                                  className="shrink-0 h-8 w-8 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 transition"
+                                  aria-label="Увеличить количество"
+                                >
+                                  +
+                                </button>
+                              </div>
+                            </td>
 
+                            {/* Сумма */}
                             <td className="px-6 py-5 text-right font-semibold text-slate-900 whitespace-nowrap">
                               {formatSom(i.price * i.qty)} сом
                             </td>
 
+                            {/* Удалить */}
                             <td className="px-6 py-5 text-right">
                               <button
                                 onClick={() => remove(i.id)}
-                                className="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition"
+                                className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition"
                                 aria-label="Удалить"
                                 title="Удалить"
                               >
@@ -160,16 +161,10 @@ export default function CartPage() {
                     const name = size ? i.title.replace(/\s*\(.+\)$/, '') : i.title
 
                     return (
-                      <div
-                        key={i.id}
-                        className="rounded-2xl border border-slate-200 p-4 bg-white"
-                      >
+                      <div key={i.id} className="rounded-2xl border border-slate-200 p-4 bg-white">
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
-                            <Link
-                              href={`/product/${i.slug}`}
-                              className="font-semibold text-slate-900"
-                            >
+                            <Link href={`/product/${i.slug}`} className="font-semibold text-slate-900">
                               {name}
                             </Link>
                             <div className="mt-1 text-sm text-slate-500">
@@ -189,9 +184,7 @@ export default function CartPage() {
                         <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
                           <div className="rounded-xl bg-slate-50 border border-slate-200 p-3">
                             <div className="text-slate-500">Цена</div>
-                            <div className="font-semibold text-slate-900">
-                              {formatSom(i.price)} сом
-                            </div>
+                            <div className="font-semibold text-slate-900">{formatSom(i.price)} сом</div>
                           </div>
 
                           <div className="rounded-xl bg-slate-50 border border-slate-200 p-3">
@@ -253,30 +246,17 @@ export default function CartPage() {
 
                 <Link
                   href="/checkout"
-                  className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-green-600 px-6 py-3 font-semibold text-white
-                             hover:bg-green-700 transition"
+                  className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-green-600 px-6 py-3 font-semibold text-white hover:bg-green-700 transition"
                 >
                   Оформить заказ
                 </Link>
 
                 <Link
                   href="/"
-                  className="mt-3 inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-6 py-3 font-semibold text-slate-900
-                             hover:bg-slate-50 transition"
+                  className="mt-3 inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-6 py-3 font-semibold text-slate-900 hover:bg-slate-50 transition"
                 >
                   Продолжить покупки
                 </Link>
-
-                {/* Если у тебя есть clear() в контексте — включи: */}
-                {/*
-                <button
-                  onClick={clear}
-                  className="mt-3 inline-flex w-full items-center justify-center rounded-xl border border-red-200 bg-red-50 px-6 py-3 font-semibold text-red-700
-                             hover:bg-red-100 transition"
-                >
-                  Очистить корзину
-                </button>
-                */}
               </aside>
             </div>
           )}
