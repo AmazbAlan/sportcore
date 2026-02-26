@@ -54,15 +54,15 @@ export default function CartPage() {
                 <div className="hidden md:block">
                   <table className="w-full text-left table-fixed">
                     <thead className="bg-slate-50">
-                    <tr className="text-sm text-slate-600">
-                      <th className="px-6 py-4 font-semibold">Товар</th>
-                      <th className="px-6 py-4 font-semibold w-[140px]">Размер</th>
-                      <th className="px-6 py-4 font-semibold w-[140px]">Цена</th>
-                      <th className="px-6 py-4 font-semibold w-[220px]">Кол-во</th>
-                      <th className="px-6 py-4 font-semibold w-[140px] text-right">Сумма</th>
-                      <th className="px-6 py-4 w-[70px]"></th>
-                    </tr>
-                  </thead>
+                      <tr className="text-sm text-slate-600">
+                        <th className="px-6 py-4 font-semibold">Товар</th>
+                        <th className="px-6 py-4 font-semibold">Размер</th>
+                        <th className="px-6 py-4 font-semibold">Цена</th>
+                        <th className="px-6 py-4 font-semibold">Кол-во</th>
+                        <th className="px-6 py-4 font-semibold text-right">Сумма</th>
+                        <th className="px-6 py-4"></th>
+                      </tr>
+                    </thead>
 
                     <tbody className="divide-y divide-slate-200">
                       {items.map((i) => {
@@ -101,35 +101,35 @@ export default function CartPage() {
                             </td>
 
                             <td className="px-6 py-5">
-                                <div className="inline-flex items-center gap-2 whitespace-nowrap">
-                                  <button
-                                    type="button"
-                                    onClick={() => update(i.id, Math.max(1, i.qty - 1))}
-                                    className="shrink-0 h-9 w-9 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 transition"
-                                    aria-label="Уменьшить количество"
-                                  >
-                                    −
-                                  </button>
+                              <div className="inline-flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => update(i.id, Math.max(1, i.qty - 1))}
+                                  className="h-9 w-9 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 transition"
+                                  aria-label="Уменьшить количество"
+                                >
+                                  −
+                                </button>
 
-                                  <input
-                                    type="number"
-                                    min={1}
-                                    value={i.qty}
-                                    onChange={(e) => update(i.id, Math.max(1, Number(e.target.value)))}
-                                    className="shrink-0 h-9 w-16 rounded-lg border border-slate-300 px-2 text-center outline-none
-                                              focus:border-slate-400 focus:ring-4 focus:ring-slate-100"
-                                  />
+                                <input
+                                  type="number"
+                                  min={1}
+                                  value={i.qty}
+                                  onChange={(e) => update(i.id, Math.max(1, Number(e.target.value)))}
+                                  className="h-9 w-16 rounded-lg border border-slate-300 px-2 text-center outline-none
+                                             focus:border-slate-400 focus:ring-4 focus:ring-slate-100"
+                                />
 
-                                  <button
-                                    type="button"
-                                    onClick={() => update(i.id, i.qty + 1)}
-                                    className="shrink-0 h-9 w-9 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 transition"
-                                    aria-label="Увеличить количество"
-                                  >
-                                    +
-                                  </button>
-                                </div>
-                              </td>
+                                <button
+                                  type="button"
+                                  onClick={() => update(i.id, i.qty + 1)}
+                                  className="h-9 w-9 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 transition"
+                                  aria-label="Увеличить количество"
+                                >
+                                  +
+                                </button>
+                              </div>
+                            </td>
 
                             <td className="px-6 py-5 text-right font-semibold text-slate-900 whitespace-nowrap">
                               {formatSom(i.price * i.qty)} сом
