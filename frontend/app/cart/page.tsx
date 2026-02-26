@@ -80,14 +80,8 @@ export default function CartPage() {
                               </div>
                             </td>
 
-                            <td className="px-6 py-5 text-slate-700">
-                              {size ? (
-                                <span className="inline-flex rounded-full bg-slate-100 border border-slate-200 px-3 py-1 text-sm">
-                                  {size}
-                                </span>
-                              ) : (
-                                <span className="text-slate-400">—</span>
-                              )}
+                            <td className="px-6 py-5 text-slate-700 whitespace-nowrap font-medium">
+                              {size || <span className="text-slate-400 font-normal">—</span>}
                             </td>
 
                             <td className="px-6 py-5 text-slate-700 whitespace-nowrap">
@@ -140,8 +134,8 @@ export default function CartPage() {
                             <Link href={`/product/${i.slug}`} className="font-semibold text-slate-900">
                               {name}
                             </Link>
-                            <div className="mt-1 text-sm text-slate-500">
-                              {size ? `Размер: ${size}` : 'Размер: —'}
+                            <div className="mt-1 text-sm text-slate-600">
+                              {size || '—'}
                             </div>
                           </div>
 
