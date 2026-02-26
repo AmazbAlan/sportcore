@@ -56,7 +56,7 @@ export default function CheckoutPage() {
       ]
 
       const text = encodeURIComponent(lines.join('\n'))
-
+console.log('CHECKOUT ITEMS:', items)
       const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
