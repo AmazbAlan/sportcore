@@ -21,8 +21,7 @@ export default function CheckoutPage() {
 
   const canSubmit =
     items.length > 0 &&
-    name.trim().length >= 2 &&
-    phone.trim().length >= 6 &&
+    name.trim().length >= 1 &&
     address.trim().length >= 4 &&
     !isSubmitting
 
@@ -223,6 +222,12 @@ export default function CheckoutPage() {
           </aside>
         </div>
       </div>
+      
     </main>
   )
+}
+export async function POST(req: Request) {
+  const body = await req.json().catch(() => null)
+  console.log('BODY:', body)
+  return Response.json({ ok: true })
 }
