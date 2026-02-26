@@ -37,10 +37,6 @@ export default function CheckoutPage() {
       setError('Укажи имя (минимум 2 символа).')
       return
     }
-    if (phone.trim().length < 6) {
-      setError('Укажи номер телефона.')
-      return
-    }
     if (address.trim().length < 4) {
       setError('Укажи адрес доставки.')
       return
