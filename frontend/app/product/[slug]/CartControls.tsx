@@ -16,49 +16,67 @@ export default function CartControls({ product }: CartControlsProps) {
   const [qty, setQty] = useState(1)
   const [loading, setLoading] = useState(false)
 
-  // при смене товара сразу выбираем первый вариант
   useEffect(() => {
     const v = product.variants?.[0] ?? null
     setVariant(v)
+
+    // если цветов нет — оставляем null (это ок)
     setColor(v?.color?.[0] ?? null)
+
     setQty(1)
     setLoading(false)
   }, [product])
 
-  const available = Number(variant?.stock ?? 0)
+  // ✅ если вдруг stock хранится не в варианте — можно подстраховаться product.stock (если есть)
+  const available = Number((variant as any)?.stock ?? (product as any)?.stock ?? 0)
   const outOfStock = available <= 0
+
+  const hasColors = (variant?.color?.length ?? 0) > 0
 
   const handleVariantClick = (v: ProductVariant) => {
     if (loading) return
     setVariant(v)
+
+    // при смене варианта: если есть цвета — выбираем первый; если нет — null
     setColor(v.color?.[0] ?? null)
+
     setQty(1)
   }
 
   const handleQtyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = parseInt(e.target.value, 10) || 1
-    setQty(Math.min(Math.max(1, v), available || 1))
+    // если available = 0, всё равно держим минимум 1 в поле, но кнопка будет disabled
+    const max = available > 0 ? available : 1
+    setQty(Math.min(Math.max(1, v), max))
   }
 
   const handleAdd = useCallback(async () => {
-    if (!variant || !color || outOfStock) return
+    // ✅ цвет НЕ обязателен, если у варианта нет цветов
+    if (!variant || outOfStock) return
+    if (hasColors && !color) return
+
     setLoading(true)
     try {
+      const sizePart = variant.size ? `${variant.size}` : ''
+      const colorPart = hasColors && color?.name ? `, ${color.name}` : ''
+      const suffix = sizePart || colorPart ? ` (${sizePart}${colorPart})` : ''
+
       add(
         {
           productId: product.id,
           variantId: variant.id,
           slug: product.slug,
-          title: `${product.title} (${variant.size}, ${color.name})`,
+          title: `${product.title}${suffix}`,
           price: product.price,
-          color: color.name,
+          // ✅ если цвета нет — не передаём
+          ...(hasColors && color?.name ? { color: color.name } : {}),
         },
         qty
       )
     } finally {
       setLoading(false)
     }
-  }, [add, product, variant, color, qty, outOfStock])
+  }, [add, product, variant, color, qty, outOfStock, hasColors])
 
   return (
     <div className="mt-6 space-y-4 bg-white p-4 rounded shadow">
@@ -71,8 +89,8 @@ export default function CartControls({ product }: CartControlsProps) {
             <span className="font-medium block mb-2">Размер:</span>
             <div className="flex flex-wrap gap-2">
               {product.variants.map((v, idx) => {
-                const vStock = Number(v.stock ?? 0)
-                const isActive = variant.size === v.size && variant.id === v.id
+                const vStock = Number((v as any).stock ?? 0)
+                const isActive = variant.id === v.id
                 return (
                   <button
                     key={`${v.id}-${v.size}-${idx}`}
@@ -84,6 +102,7 @@ export default function CartControls({ product }: CartControlsProps) {
                       ${isActive ? 'border-yellow-500' : 'border-gray-300'}
                       ${vStock === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:border-yellow-500'}
                     `}
+                    type="button"
                   >
                     <span className="text-sm font-medium">{v.size}</span>
                   </button>
@@ -92,14 +111,13 @@ export default function CartControls({ product }: CartControlsProps) {
             </div>
           </div>
 
-          {/* 2. Цвет */}
-          {variant.color?.length ? (
+          {/* 2. Цвет (только если есть) */}
+          {hasColors ? (
             <div>
               <span className="font-medium block mb-2">Цвет:</span>
               <div className="flex flex-wrap gap-3">
-                {variant.color.map((c, idx) => {
+                {variant.color!.map((c, idx) => {
                   const imageUrl = c.image?.[0]?.url ?? ''
-
                   return (
                     <button
                       key={`${c.name}-${idx}`}
@@ -149,7 +167,7 @@ export default function CartControls({ product }: CartControlsProps) {
               id="qty"
               type="number"
               min={1}
-              max={available || 1}
+              max={available > 0 ? available : 1}
               value={qty}
               onChange={handleQtyChange}
               disabled={outOfStock || loading}
@@ -158,10 +176,10 @@ export default function CartControls({ product }: CartControlsProps) {
             <span className="text-xs text-gray-500">макс: {available}</span>
           </div>
 
-          {/* 5. Кнопка «В корзину» */}
+          {/* 5. Кнопка */}
           <button
             onClick={handleAdd}
-            disabled={outOfStock || loading}
+            disabled={outOfStock || loading || (hasColors && !color)}
             className="
               relative flex items-center justify-center
               px-6 py-2
