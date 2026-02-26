@@ -100,7 +100,7 @@ export default function CheckoutPage() {
                   Оформление заказа
                 </h1>
                 <p className="mt-1 text-slate-500">
-                  Заполни данные — мы откроем WhatsApp с готовым сообщением.
+                  Заполни данные - мы откроем WhatsApp с готовым заказом.
                 </p>
               </div>
 
@@ -119,7 +119,7 @@ export default function CheckoutPage() {
               <div className="grid gap-2">
                 <label className="text-sm font-medium text-slate-700">Имя</label>
                 <input
-                  placeholder="Например: Алимбек"
+                  placeholder="Например: Бексултан"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   disabled={isSubmitting}
@@ -146,7 +146,7 @@ export default function CheckoutPage() {
               <div className="grid gap-2">
                 <label className="text-sm font-medium text-slate-700">Адрес доставки</label>
                 <textarea
-                  placeholder="Город, улица, дом, квартира, ориентир"
+                  placeholder="Город, улица, дом, квартира"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   disabled={isSubmitting}
