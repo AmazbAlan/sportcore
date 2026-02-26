@@ -16,7 +16,8 @@ export default function CartPage() {
   return (
     <main className="min-h-[calc(100vh-120px)] bg-slate-50">
       <div className="container mx-auto px-4 py-10">
-        <div className="mx-auto max-w-5xl">
+        {/* чуть шире контейнер на больших экранах */}
+        <div className="mx-auto max-w-6xl">
           <div className="flex items-start justify-between gap-4">
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Ваша корзина</h1>
@@ -42,7 +43,8 @@ export default function CartPage() {
               </Link>
             </div>
           ) : (
-            <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_360px]">
+            // ✅ на десктопе делаем левую часть шире, правую уже
+            <div className="mt-6 grid gap-6 xl:grid-cols-[1fr_320px] lg:grid-cols-[1fr_340px]">
               {/* Список товаров */}
               <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                 {/* Desktop table */}
@@ -52,7 +54,7 @@ export default function CartPage() {
                       <tr className="text-sm text-slate-600">
                         <th className="px-6 py-4 font-semibold">Товар</th>
                         <th className="px-6 py-4 font-semibold w-[140px]">Размер</th>
-                        <th className="px-6 py-4 font-semibold w-[130px]">Цена</th>
+                        <th className="px-6 py-4 font-semibold w-[120px]">Цена</th>
                         <th className="px-6 py-4 font-semibold w-[120px]">Кол-во</th>
                         <th className="px-6 py-4 font-semibold w-[140px] text-right">Сумма</th>
                         <th className="px-6 py-4 w-[72px]"></th>
@@ -73,7 +75,6 @@ export default function CartPage() {
                                   href={`/product/${i.slug}`}
                                   className="font-semibold text-slate-900 hover:underline block"
                                 >
-                                  {/* без line-clamp чтобы не требовать плагин */}
                                   <span className="block truncate">{name}</span>
                                 </Link>
                               </div>
@@ -90,10 +91,9 @@ export default function CartPage() {
                             </td>
 
                             <td className="px-6 py-5 text-slate-700 whitespace-nowrap">
-                              {formatSom(i.price)} сом
+                              {formatSom(i.price)} с
                             </td>
 
-                            {/* Количество: только input, без + и - */}
                             <td className="px-6 py-5">
                               <input
                                 type="number"
@@ -106,7 +106,7 @@ export default function CartPage() {
                             </td>
 
                             <td className="px-6 py-5 text-right font-semibold text-slate-900 whitespace-nowrap">
-                              {formatSom(i.price * i.qty)} сом
+                              {formatSom(i.price * i.qty)} с
                             </td>
 
                             <td className="px-6 py-5 text-right">
@@ -157,13 +157,13 @@ export default function CartPage() {
                         <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
                           <div className="rounded-xl bg-slate-50 border border-slate-200 p-3">
                             <div className="text-slate-500">Цена</div>
-                            <div className="font-semibold text-slate-900">{formatSom(i.price)} сом</div>
+                            <div className="font-semibold text-slate-900">{formatSom(i.price)} с</div>
                           </div>
 
                           <div className="rounded-xl bg-slate-50 border border-slate-200 p-3">
                             <div className="text-slate-500">Сумма</div>
                             <div className="font-semibold text-slate-900">
-                              {formatSom(i.price * i.qty)} сом
+                              {formatSom(i.price * i.qty)} с
                             </div>
                           </div>
                         </div>
@@ -192,7 +192,7 @@ export default function CartPage() {
                   <div className="flex items-center justify-between">
                     <span className="text-slate-600">Сумма</span>
                     <span className="text-xl font-extrabold text-slate-900">
-                      {formatSom(totalValue)} сом
+                      {formatSom(totalValue)} с
                     </span>
                   </div>
                 </div>
