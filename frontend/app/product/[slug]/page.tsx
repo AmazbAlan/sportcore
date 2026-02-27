@@ -2,10 +2,10 @@
 export const dynamic = 'force-dynamic'
 
 import React from 'react'
-import Image from 'next/image'
 import type { Metadata } from 'next'
 import { getProductBySlug } from '../../../lib/api'
 import CartControls from './CartControls'
+import ProductInfoCard from './ProductInfoCard'
 
 type ProductPageProps = {
   params: { slug: string }
@@ -19,9 +19,7 @@ function extractText(desc: any[] = []): string {
     .trim()
 }
 
-export async function generateMetadata(
-  { params }: ProductPageProps
-): Promise<Metadata> {
+export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const product = await getProductBySlug(params.slug)
 
   if (!product) {
@@ -32,7 +30,7 @@ export async function generateMetadata(
     }
   }
 
-  const desc = extractText(product.description).slice(0, 200)
+  const desc = extractText(Array.isArray(product.description) ? product.description : []).slice(0, 200)
 
   return {
     title: `${product.title} — купить в Бишкеке | Sportcore`,
@@ -54,41 +52,15 @@ export default async function ProductPage({ params }: ProductPageProps) {
     return <p className="p-4">Товар не найден.</p>
   }
 
-  const descriptionTextBlocks =
-    Array.isArray(product.description) ? product.description : []
-
-  // fallback если imageUrl пустой/битый
-  const mainImageSrc = product.imageUrl && product.imageUrl.length > 5
-    ? product.imageUrl
-    : '/placeholder.jpg'
-
   return (
     <main className="container mx-auto px-4 py-8">
-      <div className="flex flex-col md:flex-row gap-8">
-        {/* Левая часть */}
-        <div className="w-full md:w-1/2">
-          <div className="relative w-full max-w-[400px] aspect-square bg-white rounded shadow mx-auto">
-            <Image
-              src={mainImageSrc}
-              alt={product.title}
-              fill
-              sizes="(max-width: 768px) 100vw, 400px"
-              className="object-contain p-4"
-              priority
-            />
-          </div>
+      {/* Общая сетка: слева единая карточка товара (фото+описание), справа покупка */}
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+        {/* Слева: единый красивый блок */}
+        <ProductInfoCard product={product} />
 
-          {/* Описание */}
-          <div className="mt-6 space-y-2 text-sm text-gray-700">
-            {descriptionTextBlocks.map((block, i) => {
-              const text = (block?.children ?? []).map((c: any) => c?.text ?? '').join(' ')
-              return text ? <p key={i}>{text}</p> : null
-            })}
-          </div>
-        </div>
-
-        {/* Правая часть */}
-        <div className="w-full md:w-1/2 flex flex-col space-y-4">
+        {/* Справа: название, цена, параметры/кнопка */}
+        <div className="flex flex-col space-y-4">
           <h1 className="text-3xl font-bold text-[#1a1f4b]">{product.title}</h1>
 
           <p className="text-2xl font-semibold text-gray-800">
