@@ -1,39 +1,33 @@
-import CategoryCard from './CategoryCard'
-import { getBannerCategories } from '../../lib/api'
+import Link from 'next/link'
+import Image from 'next/image'
 
-export default async function CategoryGrid() {
-  const categories = await getBannerCategories()
-  console.log('Categories from Strapi:', categories)
+interface CategoryCardProps {
+  title: string
+  image: string
+  href: string
+}
 
-  // Разбиваем на 2 ряда
-  const topRow = categories.slice(0, 3)
-  const bottomRow = categories.slice(3, 5)
-
+export default function CategoryCard({ title, image, href }: CategoryCardProps) {
   return (
-    <section className="max-w-7xl mx-auto px-4 py-16 space-y-8">
-      <h2 className="text-2xl font-bold text-[#1a1f4b]">Популярные категории</h2>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {topRow.map((cat, index) => (
-          <CategoryCard
-            key={cat.slug || `top-${index}`}
-            title={cat.name}
-            image={cat.imageUrl}
-            href={`/category/${cat.slug}`}
-          />
-        ))}
+    <Link
+      href={href}
+      className="group relative aspect-square bg-white rounded-xl shadow-md hover:shadow-xl transition-all overflow-hidden"
+    >
+      <div className="relative w-full h-full p-6 flex items-center justify-center">
+        <Image
+          src={image}
+          alt={title}
+          fill
+          className="object-contain p-6"
+          unoptimized
+        />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        {bottomRow.map((cat, index) => (
-          <CategoryCard
-            key={cat.slug || `bottom-${index}`}
-            title={cat.name}
-            image={cat.imageUrl}
-            href={`/category/${cat.slug}`}
-          />
-        ))}
+      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+        <span className="text-white text-xl font-semibold text-center px-4">
+          {title}
+        </span>
       </div>
-    </section>
+    </Link>
   )
 }
