@@ -3,6 +3,7 @@ import FeaturedProducts from './components/FeaturedProducts'
 import CategoryGrid from './components/CategoryGrid'
 import NewestArrivals from './components/NewestArrivals'
 
+
 export const metadata = {
   title: 'SPORTCORE — магазин спортивных товаров | СПОРТКОР | Спорт кор',
   description: 'Спортивные товары для тренировок, спорта и активной жизни. Магазин SPORTCORE в Бишкеке.',
