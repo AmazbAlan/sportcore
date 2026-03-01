@@ -185,7 +185,6 @@ export default function CartControls({ product }: CartControlsProps) {
                           ].join(' ')}
                         >
                           {imageUrl ? (
-                            // eslint-disable-next-line @next/next/no-img-element
                             <img
                               src={imageUrl}
                               alt={c.name}
