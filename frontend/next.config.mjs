@@ -5,7 +5,11 @@ const nextConfig = {
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'res.cloudinary.com', pathname: '/**' },
-      { protocol: 'https', hostname: 'sportcore-production.up.railway.app', pathname: '/uploads/**' },
+      {
+        protocol: 'https',
+        hostname: 'sportcore-production.up.railway.app',
+        pathname: '/uploads/**',
+      },
       { protocol: 'http', hostname: 'localhost', port: '1337', pathname: '/uploads/**' },
     ],
   },
@@ -13,4 +17,4 @@ const nextConfig = {
   typescript: { ignoreBuildErrors: true },
 }
 
-module.exports = nextConfig
+export default nextConfig
