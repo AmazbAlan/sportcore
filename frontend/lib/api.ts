@@ -54,11 +54,28 @@ interface StrapiListResponse<T> {
 }
 
 async function fetchJSON<T>(url: string): Promise<T> {
-  const res = await fetch(url, { cache: 'no-store' })
+  // Если в проде забыли env — хотя бы увидишь это в логах
+  if (!API_URL) {
+    console.error('API_URL is empty. Check NEXT_PUBLIC_STRAPI_URL / STRAPI_URL')
+  }
+
+  const res = await fetch(url, {
+    cache: 'no-store',
+    headers: {
+      Accept: 'application/json',
+    },
+  })
+
   if (!res.ok) {
     const message = await res.text().catch(() => '')
+    console.error('[Strapi fetch error]', {
+      url,
+      status: res.status,
+      body: message?.slice?.(0, 500),
+    })
     throw new Error(`Fetch error ${res.status}: ${message}`)
   }
+
   return res.json()
 }
 
@@ -204,21 +221,32 @@ function flattenProduct(entry: any): Product {
 export async function getAllProducts(): Promise<Product[]> {
   const qp = productPopulateQuery()
   const url = `${API_URL}/api/products?${qp.toString()}`
-  const resp = await fetchJSON<StrapiListResponse<any>>(url)
-  return resp.data.map(flattenProduct)
+
+  try {
+    const resp = await fetchJSON<StrapiListResponse<any>>(url)
+    const items = Array.isArray(resp?.data) ? resp.data : []
+    return items.map(flattenProduct)
+  } catch (err) {
+    console.error('getAllProducts error:', err)
+    return []
+  }
 }
 
-export async function getProductsByCategory(
-  slug: string,
-  maxPrice?: number
-): Promise<Product[]> {
+export async function getProductsByCategory(slug: string, maxPrice?: number): Promise<Product[]> {
   const qp = productPopulateQuery()
   qp.set('filters[category][slug][$eq]', slug)
   if (maxPrice !== undefined) qp.set('filters[price][$lte]', String(maxPrice))
 
   const url = `${API_URL}/api/products?${qp.toString()}`
-  const resp = await fetchJSON<StrapiListResponse<any>>(url)
-  return resp.data.map(flattenProduct)
+
+  try {
+    const resp = await fetchJSON<StrapiListResponse<any>>(url)
+    const items = Array.isArray(resp?.data) ? resp.data : []
+    return items.map(flattenProduct)
+  } catch (err) {
+    console.error('getProductsByCategory error:', err)
+    return []
+  }
 }
 
 export async function searchProducts(query: string): Promise<Product[]> {
@@ -226,8 +254,15 @@ export async function searchProducts(query: string): Promise<Product[]> {
   qp.set('filters[title][$containsi]', query)
 
   const url = `${API_URL}/api/products?${qp.toString()}`
-  const resp = await fetchJSON<StrapiListResponse<any>>(url)
-  return resp.data.map(flattenProduct)
+
+  try {
+    const resp = await fetchJSON<StrapiListResponse<any>>(url)
+    const items = Array.isArray(resp?.data) ? resp.data : []
+    return items.map(flattenProduct)
+  } catch (err) {
+    console.error('searchProducts error:', err)
+    return []
+  }
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
@@ -238,10 +273,11 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
 
   try {
     const resp = await fetchJSON<StrapiListResponse<any>>(url)
-    if (!resp.data.length) return null
-    return flattenProduct(resp.data[0])
+    const items = Array.isArray(resp?.data) ? resp.data : []
+    if (!items.length) return null
+    return flattenProduct(items[0])
   } catch (err) {
-    console.error('Ошибка получения товара по slug:', err)
+    console.error('getProductBySlug error:', err)
     return null
   }
 }
@@ -254,9 +290,10 @@ export async function getFeaturedProducts(): Promise<Product[]> {
 
   try {
     const resp = await fetchJSON<StrapiListResponse<any>>(url)
-    return Array.isArray(resp.data) ? resp.data.map(flattenProduct) : []
+    const items = Array.isArray(resp?.data) ? resp.data : []
+    return items.map(flattenProduct)
   } catch (err) {
-    console.error('Ошибка получения избранных товаров:', err)
+    console.error('getFeaturedProducts error:', err)
     return []
   }
 }
@@ -265,20 +302,27 @@ export async function getFeaturedProducts(): Promise<Product[]> {
 
 export async function getAllCategories(): Promise<Category[]> {
   const url = `${API_URL}/api/categories?populate[0]=image`
-  const resp = await fetchJSON<StrapiListResponse<any>>(url)
 
-  return resp.data.map((entry) => {
-    const raw = entry.attributes ?? entry
-    const imageUrl =
-      pickMediaUrl(raw.image ?? raw.imageUrl ?? raw.images) ||
-      '/placeholder-category.jpg'
+  try {
+    const resp = await fetchJSON<StrapiListResponse<any>>(url)
+    const items = Array.isArray(resp?.data) ? resp.data : []
 
-    return {
-      name: raw.name ?? '',
-      slug: raw.slug ?? '',
-      imageUrl,
-    }
-  })
+    return items.map((entry) => {
+      const raw = entry?.attributes ?? entry ?? {}
+      const imageUrl =
+        pickMediaUrl(raw.image ?? raw.imageUrl ?? raw.images) ||
+        '/placeholder-category.jpg'
+
+      return {
+        name: raw.name ?? '',
+        slug: raw.slug ?? '',
+        imageUrl,
+      }
+    })
+  } catch (err) {
+    console.error('getAllCategories error:', err)
+    return []
+  }
 }
 
 export async function getBannerCategories(): Promise<BannerCategory[]> {
@@ -287,20 +331,27 @@ export async function getBannerCategories(): Promise<BannerCategory[]> {
   qp.set('filters[featured][$eq]', 'true')
 
   const url = `${API_URL}/api/categories?${qp.toString()}`
-  const resp = await fetchJSON<StrapiListResponse<any>>(url)
 
-  return resp.data.map((entry) => {
-    const raw = entry.attributes ?? entry
-    const imageUrl =
-      pickMediaUrl(raw.image ?? raw.imageUrl ?? raw.images) ||
-      '/placeholder-category.jpg'
+  try {
+    const resp = await fetchJSON<StrapiListResponse<any>>(url)
+    const items = Array.isArray(resp?.data) ? resp.data : []
 
-    return {
-      name: raw.name ?? '',
-      slug: raw.slug ?? '',
-      imageUrl,
-    }
-  })
+    return items.map((entry) => {
+      const raw = entry?.attributes ?? entry ?? {}
+      const imageUrl =
+        pickMediaUrl(raw.image ?? raw.imageUrl ?? raw.images) ||
+        '/placeholder-category.jpg'
+
+      return {
+        name: raw.name ?? '',
+        slug: raw.slug ?? '',
+        imageUrl,
+      }
+    })
+  } catch (err) {
+    console.error('getBannerCategories error:', err)
+    return []
+  }
 }
 
 export async function getNonBannerCategories(): Promise<BannerCategory[]> {
@@ -309,18 +360,25 @@ export async function getNonBannerCategories(): Promise<BannerCategory[]> {
   qp.set('filters[featured][$eq]', 'false')
 
   const url = `${API_URL}/api/categories?${qp.toString()}`
-  const resp = await fetchJSON<StrapiListResponse<any>>(url)
 
-  return resp.data.map((entry) => {
-    const raw = entry.attributes ?? entry
-    const imageUrl =
-      pickMediaUrl(raw.image ?? raw.imageUrl ?? raw.images) ||
-      '/placeholder-category.jpg'
+  try {
+    const resp = await fetchJSON<StrapiListResponse<any>>(url)
+    const items = Array.isArray(resp?.data) ? resp.data : []
 
-    return {
-      name: raw.name ?? '',
-      slug: raw.slug ?? '',
-      imageUrl,
-    }
-  })
+    return items.map((entry) => {
+      const raw = entry?.attributes ?? entry ?? {}
+      const imageUrl =
+        pickMediaUrl(raw.image ?? raw.imageUrl ?? raw.images) ||
+        '/placeholder-category.jpg'
+
+      return {
+        name: raw.name ?? '',
+        slug: raw.slug ?? '',
+        imageUrl,
+      }
+    })
+  } catch (err) {
+    console.error('getNonBannerCategories error:', err)
+    return []
+  }
 }
