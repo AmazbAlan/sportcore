@@ -6,6 +6,6 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: "*",
       allow: "/",
     },
-    sitemap: "https://sportcore.kg/api/sitemap",
+    sitemap: "https://sportcore.kg/sitemap.xml",
   };
 }

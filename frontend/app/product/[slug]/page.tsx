@@ -1,5 +1,5 @@
 // frontend/app/product/[slug]/page.tsx
-export const dynamic = 'force-dynamic'
+export const revalidate = 3600
 
 import React from 'react'
 import type { Metadata } from 'next'
@@ -12,7 +12,7 @@ type ProductPageProps = {
 }
 
 function extractText(desc: any[] = []): string {
-  return desc
+  return desc 
     .map((block: any) => (block?.children ?? []).map((c: any) => c?.text ?? '').join(' '))
     .join(' ')
     .replace(/\s+/g, ' ')
@@ -33,11 +33,13 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
   const desc = extractText(Array.isArray(product.description) ? product.description : []).slice(0, 200)
 
   return {
+    alternates: { canonical: `https://sportcore.kg/product/${product.slug}` },
     title: `${product.title} — купить в Бишкеке | Sportcore`,
     description:
       desc ||
       `Купить ${product.title} в Бишкеке. Описание, характеристики, фото. Быстрая доставка по городу.`,
     openGraph: {
+      url: `https://sportcore.kg/product/${product.slug}`,
       title: `${product.title} — Sportcore`,
       description: desc,
       images: product.imageUrl ? [product.imageUrl] : [],
@@ -52,8 +54,34 @@ export default async function ProductPage({ params }: ProductPageProps) {
     return <p className="p-4">Товар не найден.</p>
   }
 
+const desc = extractText(Array.isArray(product.description) ? product.description : []).slice(0, 300)
+
+const inStock = (product.variants ?? []).some(v => Number(v.stock ?? 0) > 0)
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Product",
+  name: product.title,
+  image: product.imageUrl ? [product.imageUrl] : [],
+  description: desc || product.title,
+  offers: {
+    "@type": "Offer",
+    url: `https://sportcore.kg/product/${product.slug}`,
+    priceCurrency: "KGS",
+    price: String(product.price),
+    availability: inStock
+      ? "https://schema.org/InStock"
+      : "https://schema.org/OutOfStock",
+  },
+}
+
   return (
-    <main className="container mx-auto px-4 py-8">
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <main className="container mx-auto px-4 py-8">
       {/* Общая сетка: слева единая карточка товара (фото+описание), справа покупка */}
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
         {/* Слева: единый красивый блок */}
@@ -71,5 +99,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
         </div>
       </div>
     </main>
+    </>
   )
 }

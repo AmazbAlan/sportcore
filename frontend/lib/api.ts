@@ -53,17 +53,20 @@ interface StrapiListResponse<T> {
   meta: any
 }
 
-async function fetchJSON<T>(url: string): Promise<T> {
+async function fetchJSON<T>(url: string, init?: RequestInit): Promise<T> {
   // Если в проде забыли env — хотя бы увидишь это в логах
   if (!API_URL) {
     console.error('API_URL is empty. Check NEXT_PUBLIC_STRAPI_URL / STRAPI_URL')
   }
 
   const res = await fetch(url, {
-    cache: 'no-store',
+    // По умолчанию кешируем публичные GET для стабильного SSR/SEO.
+    // Если нужно отключить кеш — передай { cache: 'no-store' } как второй аргумент.
+    next: { revalidate: 3600 },
     headers: {
       Accept: 'application/json',
     },
+    ...init,
   })
 
   if (!res.ok) {
@@ -256,7 +259,7 @@ export async function searchProducts(query: string): Promise<Product[]> {
   const url = `${API_URL}/api/products?${qp.toString()}`
 
   try {
-    const resp = await fetchJSON<StrapiListResponse<any>>(url)
+    const resp = await fetchJSON<StrapiListResponse<any>>(url, { cache: 'no-store' })
     const items = Array.isArray(resp?.data) ? resp.data : []
     return items.map(flattenProduct)
   } catch (err) {

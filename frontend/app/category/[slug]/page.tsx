@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic'
+export const revalidate = 3600
 
 import { getProductsByCategory } from '../../../lib/api'
 import ProductCard from '../../components/ProductCard'
