@@ -32,15 +32,23 @@ export default function CategoryFilter({ categorySlug }: Props) {
   }
 
   const quickPrice = (min: number, max?: number) => {
-
     setMinPrice(String(min))
     setMaxPrice(max ? String(max) : '')
   }
 
   return (
-    <aside className="bg-white rounded-xl shadow-sm p-5 space-y-6">
+    <aside className="
+    bg-white
+    rounded-2xl
+    border
+    border-gray-100
+    shadow-sm
+    p-6
+    space-y-6
+    h-fit
+    ">
 
-      <h2 className="font-semibold text-lg">
+      <h2 className="font-semibold text-lg text-[#1f2937]">
         Фильтр
       </h2>
 
@@ -57,7 +65,19 @@ export default function CategoryFilter({ categorySlug }: Props) {
           placeholder="Например: ролл"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full border rounded-lg px-3 py-2"
+          className="
+          w-full
+          border
+          border-gray-300
+          rounded-lg
+          px-3
+          py-2.5
+          transition
+          focus:border-[#F5B301]
+          focus:ring-2
+          focus:ring-[#F5B301]/30
+          outline-none
+          "
         />
 
       </div>
@@ -106,28 +126,64 @@ export default function CategoryFilter({ categorySlug }: Props) {
 
           <button
             onClick={() => quickPrice(0, 1000)}
-            className="border rounded-lg px-3 py-1 text-sm"
+            className="
+            px-3 py-1.5
+            rounded-full
+            text-sm
+            border
+            border-gray-300
+            transition
+            hover:bg-gray-100
+            active:scale-[0.95]
+            "
           >
             до 1000
           </button>
 
           <button
             onClick={() => quickPrice(1000, 3000)}
-            className="border rounded-lg px-3 py-1 text-sm"
+            className="
+            px-3 py-1.5
+            rounded-full
+            text-sm
+            border
+            border-gray-300
+            transition
+            hover:bg-gray-100
+            active:scale-[0.95]
+            "
           >
             1000–3000
           </button>
 
           <button
             onClick={() => quickPrice(3000, 5000)}
-            className="border rounded-lg px-3 py-1 text-sm"
+            className="
+            px-3 py-1.5
+            rounded-full
+            text-sm
+            border
+            border-gray-300
+            transition
+            hover:bg-gray-100
+            active:scale-[0.95]
+            "
           >
             3000–5000
           </button>
 
           <button
             onClick={() => quickPrice(5000)}
-            className="border rounded-lg px-3 py-1 text-sm"
+            className="
+            px-3 py-1.5
+            rounded-full
+            text-sm
+            border
+            border-gray-300
+            transition
+            hover:bg-gray-100
+            active:scale-[0.95]
+            "
           >
             5000+
           </button>
@@ -139,18 +195,44 @@ export default function CategoryFilter({ categorySlug }: Props) {
 
       {/* BUTTONS */}
 
-      <div className="flex gap-2">
+      <div className="flex gap-3 pt-2">
 
         <button
           onClick={apply}
-          className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg w-full"
+          className="
+          flex-1
+          bg-[#F5B301]
+          text-white
+          font-medium
+          px-4
+          py-2.5
+          rounded-lg
+          shadow-sm
+          transition
+          hover:bg-[#E0A200]
+          active:bg-[#C98F00]
+          active:scale-[0.97]
+          focus:outline-none
+          focus:ring-2
+          focus:ring-[#F5B301]/40
+          "
         >
           Применить
         </button>
 
         <button
           onClick={reset}
-          className="bg-gray-200 px-4 py-2 rounded-lg"
+          className="
+          px-4
+          py-2.5
+          rounded-lg
+          border
+          border-gray-300
+          text-gray-700
+          transition
+          hover:bg-gray-100
+          active:scale-[0.97]
+          "
         >
           Сброс
         </button>

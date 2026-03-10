@@ -18,43 +18,50 @@ export default async function CategoryPage({ params, searchParams }: Props) {
 
   const categoryName = category?.name || decodeURIComponent(slug)
 
-  const rawPrice = Array.isArray(searchParams?.price)
-    ? searchParams?.price[0]
-    : searchParams?.price
+  const rawMin = Array.isArray(searchParams?.min)
+    ? searchParams?.min[0]
+    : searchParams?.min
+
+  const rawMax = Array.isArray(searchParams?.max)
+    ? searchParams?.max[0]
+    : searchParams?.max
 
   const rawSearch = Array.isArray(searchParams?.search)
     ? searchParams?.search[0]
     : searchParams?.search
 
-  const maxPrice = rawPrice ? Number(rawPrice) : undefined
+  const minPrice = rawMin ? Number(rawMin) : undefined
+  const maxPrice = rawMax ? Number(rawMax) : undefined
   const search = rawSearch ? rawSearch.toLowerCase() : undefined
 
-  const productsByCategory = await getProductsByCategory(slug, maxPrice)
+  const productsByCategory = await getProductsByCategory(slug)
 
-  const products = search
-    ? productsByCategory.filter((p) =>
-        p.title.toLowerCase().includes(search)
-      )
-    : productsByCategory
+  let products = productsByCategory
+
+  if (search) {
+    products = products.filter((p) =>
+      p.title.toLowerCase().includes(search)
+    )
+  }
+
+  if (minPrice !== undefined) {
+    products = products.filter((p) => p.price >= minPrice)
+  }
+
+  if (maxPrice !== undefined) {
+    products = products.filter((p) => p.price <= maxPrice)
+  }
 
   return (
     <main className="max-w-7xl mx-auto px-4 py-10">
 
-      {/* TITLE */}
-
-      <h1 className="text-3xl font-bold mb-8">
+      <h1 className="text-3xl font-bold text-[#1f2937] mb-8">
         {categoryName}
       </h1>
 
-
       <div className="grid grid-cols-1 md:grid-cols-[260px_1fr] gap-8">
 
-        {/* FILTER */}
-
         <CategoryFilter categorySlug={slug} />
-
-
-        {/* PRODUCTS */}
 
         <div>
 
