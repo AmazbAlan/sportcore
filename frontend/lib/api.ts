@@ -226,17 +226,30 @@ export async function getAllProducts(): Promise<Product[]> {
   }
 }
 
-export async function getProductsByCategory(slug: string, maxPrice?: number): Promise<Product[]> {
+export async function getProductsByCategory(
+  slug: string,
+  maxPrice?: number,
+  search?: string
+): Promise<Product[]> {
+
   const qp = productPopulateQuery()
+
   qp.set('filters[category][slug][$eq]', slug)
-  if (maxPrice !== undefined) qp.set('filters[price][$lte]', String(maxPrice))
+
+  if (maxPrice)
+    qp.set('filters[price][$lte]', String(maxPrice))
+
+  if (search)
+    qp.set('filters[title][$containsi]', search)
 
   const url = `${API_URL}/api/products?${qp.toString()}`
 
   try {
     const resp = await fetchJSON<StrapiListResponse<any>>(url)
     const items = Array.isArray(resp?.data) ? resp.data : []
+
     return items.map(flattenProduct)
+
   } catch (err) {
     console.error('getProductsByCategory error:', err)
     return []
@@ -295,17 +308,25 @@ export async function getFeaturedProducts(): Promise<Product[]> {
 // ---------------- CATEGORIES ----------------
 
 export async function getAllCategories(): Promise<Category[]> {
-  const url = `${API_URL}/api/categories?populate[0]=image`
+
+  const url = `${API_URL}/api/categories?populate=image&sort=name:asc`
 
   try {
+
     const resp = await fetchJSON<StrapiListResponse<any>>(url)
+
     const items = Array.isArray(resp?.data) ? resp.data : []
 
     return items.map((entry) => {
+
       const raw = entry?.attributes ?? entry ?? {}
+
       const imageUrl =
-        pickMediaUrl(raw.image ?? raw.imageUrl ?? raw.images) ||
-        '/placeholder-category.jpg'
+        pickMediaUrl(
+          raw.image ??
+          raw.images ??
+          raw.imageUrl
+        ) || '/placeholder-category.jpg'
 
       return {
         name: raw.name ?? '',
@@ -313,6 +334,7 @@ export async function getAllCategories(): Promise<Category[]> {
         imageUrl,
       }
     })
+
   } catch (err) {
     console.error('getAllCategories error:', err)
     return []
