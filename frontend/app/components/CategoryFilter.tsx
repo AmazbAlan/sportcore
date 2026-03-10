@@ -13,14 +13,16 @@ export default function CategoryFilter({ categorySlug }: Props) {
   const searchParams = useSearchParams()
 
   const [search, setSearch] = useState(searchParams.get('search') || '')
-  const [price, setPrice] = useState(searchParams.get('price') || '')
+  const [minPrice, setMinPrice] = useState(searchParams.get('min') || '')
+  const [maxPrice, setMaxPrice] = useState(searchParams.get('max') || '')
 
   const apply = () => {
 
     const qp = new URLSearchParams()
 
     if (search) qp.set('search', search)
-    if (price) qp.set('price', price)
+    if (minPrice) qp.set('min', minPrice)
+    if (maxPrice) qp.set('max', maxPrice)
 
     router.push(`/category/${categorySlug}?${qp.toString()}`)
   }
@@ -29,18 +31,24 @@ export default function CategoryFilter({ categorySlug }: Props) {
     router.push(`/category/${categorySlug}`)
   }
 
+  const quickPrice = (min: number, max?: number) => {
+
+    setMinPrice(String(min))
+    setMaxPrice(max ? String(max) : '')
+  }
+
   return (
-    <aside className="bg-white rounded-xl shadow p-5 space-y-6 sticky top-6">
+    <aside className="bg-white rounded-xl shadow-sm p-5 space-y-6">
 
       <h2 className="font-semibold text-lg">
-        Фильтры
+        Фильтр
       </h2>
 
       {/* SEARCH */}
 
-      <div className="space-y-2">
+      <div>
 
-        <label className="text-sm text-gray-600">
+        <label className="text-sm text-gray-600 block mb-1">
           Поиск товара
         </label>
 
@@ -49,16 +57,7 @@ export default function CategoryFilter({ categorySlug }: Props) {
           placeholder="Например: ролл"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="
-          w-full
-          border
-          rounded-lg
-          px-3
-          py-2
-          focus:ring-2
-          focus:ring-blue-500
-          outline-none
-          "
+          className="w-full border rounded-lg px-3 py-2"
         />
 
       </div>
@@ -66,24 +65,73 @@ export default function CategoryFilter({ categorySlug }: Props) {
 
       {/* PRICE */}
 
-      <div className="space-y-2">
+      <div>
 
-        <label className="text-sm text-gray-600">
-          Максимальная цена
+        <label className="text-sm text-gray-600 block mb-2">
+          Цена
         </label>
 
-        <input
-          type="range"
-          min="0"
-          max="20000"
-          step="100"
-          value={price || 0}
-          onChange={(e) => setPrice(e.target.value)}
-          className="w-full"
-        />
+        <div className="flex gap-2">
 
-        <div className="text-sm text-gray-500">
-          {price ? `${price} сом` : 'Без ограничений'}
+          <input
+            type="number"
+            placeholder="От"
+            value={minPrice}
+            onChange={(e) => setMinPrice(e.target.value)}
+            className="w-full border rounded-lg px-3 py-2"
+          />
+
+          <input
+            type="number"
+            placeholder="До"
+            value={maxPrice}
+            onChange={(e) => setMaxPrice(e.target.value)}
+            className="w-full border rounded-lg px-3 py-2"
+          />
+
+        </div>
+
+      </div>
+
+
+      {/* QUICK PRICE */}
+
+      <div className="space-y-2">
+
+        <div className="text-sm text-gray-600">
+          Быстрый выбор
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+
+          <button
+            onClick={() => quickPrice(0, 1000)}
+            className="border rounded-lg px-3 py-1 text-sm"
+          >
+            до 1000
+          </button>
+
+          <button
+            onClick={() => quickPrice(1000, 3000)}
+            className="border rounded-lg px-3 py-1 text-sm"
+          >
+            1000–3000
+          </button>
+
+          <button
+            onClick={() => quickPrice(3000, 5000)}
+            className="border rounded-lg px-3 py-1 text-sm"
+          >
+            3000–5000
+          </button>
+
+          <button
+            onClick={() => quickPrice(5000)}
+            className="border rounded-lg px-3 py-1 text-sm"
+          >
+            5000+
+          </button>
+
         </div>
 
       </div>
@@ -95,28 +143,14 @@ export default function CategoryFilter({ categorySlug }: Props) {
 
         <button
           onClick={apply}
-          className="
-          bg-yellow-500
-          hover:bg-yellow-600
-          text-white
-          px-4
-          py-2
-          rounded-lg
-          w-full
-          "
+          className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg w-full"
         >
           Применить
         </button>
 
         <button
           onClick={reset}
-          className="
-          bg-gray-200
-          hover:bg-gray-300
-          px-4
-          py-2
-          rounded-lg
-          "
+          className="bg-gray-200 px-4 py-2 rounded-lg"
         >
           Сброс
         </button>
