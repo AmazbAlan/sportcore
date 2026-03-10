@@ -17,3 +17,14 @@ export default async function CategoryIndexPage() {
 
   return <CategoryPageClient categories={categories} />
 }
+<script
+type="application/ld+json"
+dangerouslySetInnerHTML={{
+__html: JSON.stringify({
+"@context": "https://schema.org",
+"@type": "CollectionPage",
+"name": "Каталог SPORTCORE",
+"url": "https://sportcore.kg/category"
+})
+}}
+/>
