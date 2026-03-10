@@ -12,17 +12,18 @@ export default function CategoryCard({ title, image, href }: CategoryCardProps) 
     <Link
       href={href}
       className="
-      group
       bg-white
       rounded-xl
       overflow-hidden
       shadow-md
-      hover:shadow-lg
+      hover:shadow-xl
       transition
       flex
       flex-col
+      group
       "
     >
+
       {/* IMAGE */}
 
       <div className="relative aspect-square bg-gray-50">
@@ -37,11 +38,12 @@ export default function CategoryCard({ title, image, href }: CategoryCardProps) 
 
       {/* TITLE */}
 
-      <div className="p-4 text-center border-t">
+      <div className="py-3 text-center">
         <span className="font-semibold text-[#1a1f4b]">
           {title}
         </span>
       </div>
+
     </Link>
   )
 }

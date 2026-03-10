@@ -41,15 +41,16 @@ export default function CategoryFilter({ categorySlug }: Props) {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-5 mb-8 border">
+    <div className="bg-white rounded-xl shadow-sm p-4 mb-8 border">
 
-      <div className="grid md:grid-cols-3 gap-4 items-end">
+      <div className="flex flex-wrap gap-4 items-end">
 
         {/* SEARCH */}
 
-        <div>
-          <label className="text-sm text-gray-600 block mb-1">
-            Поиск товара
+        <div className="flex flex-col min-w-[220px] flex-1">
+
+          <label className="text-sm text-gray-600 mb-1">
+            Поиск
           </label>
 
           <input
@@ -58,7 +59,6 @@ export default function CategoryFilter({ categorySlug }: Props) {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="
-            w-full
             border
             rounded-lg
             px-3
@@ -70,11 +70,13 @@ export default function CategoryFilter({ categorySlug }: Props) {
           />
         </div>
 
+
         {/* PRICE */}
 
-        <div>
-          <label className="text-sm text-gray-600 block mb-1">
-            Макс. цена
+        <div className="flex flex-col min-w-[220px] flex-1">
+
+          <label className="text-sm text-gray-600 mb-1">
+            Максимальная цена
           </label>
 
           <input
@@ -84,13 +86,14 @@ export default function CategoryFilter({ categorySlug }: Props) {
             step="100"
             value={price || 0}
             onChange={(e) => setPrice(e.target.value)}
-            className="w-full"
           />
 
-          <div className="text-sm text-gray-500 mt-1">
+          <span className="text-sm text-gray-500 mt-1">
             {price ? `${price} сом` : 'Без ограничений'}
-          </div>
+          </span>
+
         </div>
+
 
         {/* BUTTONS */}
 
