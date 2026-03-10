@@ -1,7 +1,7 @@
 'use client'
 
-import { useRouter, usePathname, useSearchParams } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useState } from 'react'
 
 interface Props {
   categorySlug: string
@@ -10,126 +10,119 @@ interface Props {
 export default function CategoryFilter({ categorySlug }: Props) {
 
   const router = useRouter()
-  const pathname = usePathname()
   const searchParams = useSearchParams()
 
-  const initPrice = searchParams.get('price') || ''
-  const initSearch = searchParams.get('search') || ''
-
-  const [price, setPrice] = useState(initPrice)
-  const [search, setSearch] = useState(initSearch)
-
-  useEffect(() => {
-    setPrice(initPrice)
-    setSearch(initSearch)
-  }, [initPrice, initSearch])
+  const [search, setSearch] = useState(searchParams.get('search') || '')
+  const [price, setPrice] = useState(searchParams.get('price') || '')
 
   const apply = () => {
 
     const qp = new URLSearchParams()
 
-    if (price) qp.set('price', price)
     if (search) qp.set('search', search)
+    if (price) qp.set('price', price)
 
-    qp.set('category', categorySlug)
-
-    router.push(`${pathname}?${qp.toString()}`)
+    router.push(`/category/${categorySlug}?${qp.toString()}`)
   }
 
   const reset = () => {
-    router.push(`${pathname}?category=${categorySlug}`)
+    router.push(`/category/${categorySlug}`)
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-4 mb-8 border">
+    <aside className="bg-white rounded-xl shadow p-5 space-y-6 sticky top-6">
 
-      <div className="flex flex-wrap gap-4 items-end">
+      <h2 className="font-semibold text-lg">
+        Фильтры
+      </h2>
 
-        {/* SEARCH */}
+      {/* SEARCH */}
 
-        <div className="flex flex-col min-w-[220px] flex-1">
+      <div className="space-y-2">
 
-          <label className="text-sm text-gray-600 mb-1">
-            Поиск
-          </label>
+        <label className="text-sm text-gray-600">
+          Поиск товара
+        </label>
 
-          <input
-            type="text"
-            placeholder="Например: ролл"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="
-            border
-            rounded-lg
-            px-3
-            py-2
-            focus:ring-2
-            focus:ring-blue-500
-            outline-none
-            "
-          />
-        </div>
+        <input
+          type="text"
+          placeholder="Например: ролл"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="
+          w-full
+          border
+          rounded-lg
+          px-3
+          py-2
+          focus:ring-2
+          focus:ring-blue-500
+          outline-none
+          "
+        />
 
-
-        {/* PRICE */}
-
-        <div className="flex flex-col min-w-[220px] flex-1">
-
-          <label className="text-sm text-gray-600 mb-1">
-            Максимальная цена
-          </label>
-
-          <input
-            type="range"
-            min="0"
-            max="20000"
-            step="100"
-            value={price || 0}
-            onChange={(e) => setPrice(e.target.value)}
-          />
-
-          <span className="text-sm text-gray-500 mt-1">
-            {price ? `${price} сом` : 'Без ограничений'}
-          </span>
-
-        </div>
+      </div>
 
 
-        {/* BUTTONS */}
+      {/* PRICE */}
 
-        <div className="flex gap-2">
+      <div className="space-y-2">
 
-          <button
-            onClick={apply}
-            className="
-            bg-yellow-500
-            hover:bg-yellow-600
-            text-white
-            px-4
-            py-2
-            rounded-lg
-            "
-          >
-            Применить
-          </button>
+        <label className="text-sm text-gray-600">
+          Максимальная цена
+        </label>
 
-          <button
-            onClick={reset}
-            className="
-            bg-gray-200
-            hover:bg-gray-300
-            px-4
-            py-2
-            rounded-lg
-            "
-          >
-            Сбросить
-          </button>
+        <input
+          type="range"
+          min="0"
+          max="20000"
+          step="100"
+          value={price || 0}
+          onChange={(e) => setPrice(e.target.value)}
+          className="w-full"
+        />
 
+        <div className="text-sm text-gray-500">
+          {price ? `${price} сом` : 'Без ограничений'}
         </div>
 
       </div>
 
-    </div>
+
+      {/* BUTTONS */}
+
+      <div className="flex gap-2">
+
+        <button
+          onClick={apply}
+          className="
+          bg-yellow-500
+          hover:bg-yellow-600
+          text-white
+          px-4
+          py-2
+          rounded-lg
+          w-full
+          "
+        >
+          Применить
+        </button>
+
+        <button
+          onClick={reset}
+          className="
+          bg-gray-200
+          hover:bg-gray-300
+          px-4
+          py-2
+          rounded-lg
+          "
+        >
+          Сброс
+        </button>
+
+      </div>
+
+    </aside>
   )
 }
