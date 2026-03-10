@@ -12,7 +12,7 @@ type ProductPageProps = {
 }
 
 function extractText(desc: any[] = []): string {
-  return desc 
+  return desc
     .map((block: any) => (block?.children ?? []).map((c: any) => c?.text ?? '').join(' '))
     .join(' ')
     .replace(/\s+/g, ' ')
@@ -32,16 +32,26 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 
   const desc = extractText(Array.isArray(product.description) ? product.description : []).slice(0, 200)
 
+  const seoTitle =
+    product.seo_title?.trim() || `${product.title} — купить в Бишкеке | Sportcore`
+
+  const seoDescription =
+    product.seo_desc?.trim() ||
+    desc ||
+    `Купить ${product.title} в Бишкеке. Описание, характеристики, фото. Быстрая доставка по городу.`
+
+  const canonicalUrl = `https://sportcore.kg/product/${product.slug}`
+
   return {
-    alternates: { canonical: `https://sportcore.kg/product/${product.slug}` },
-    title: `${product.title} — купить в Бишкеке | Sportcore`,
-    description:
-      desc ||
-      `Купить ${product.title} в Бишкеке. Описание, характеристики, фото. Быстрая доставка по городу.`,
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    title: seoTitle,
+    description: seoDescription,
     openGraph: {
-      url: `https://sportcore.kg/product/${product.slug}`,
-      title: `${product.title} — Sportcore`,
-      description: desc,
+      url: canonicalUrl,
+      title: seoTitle,
+      description: seoDescription,
       images: product.imageUrl ? [product.imageUrl] : [],
     },
   }
@@ -54,26 +64,31 @@ export default async function ProductPage({ params }: ProductPageProps) {
     return <p className="p-4">Товар не найден.</p>
   }
 
-const desc = extractText(Array.isArray(product.description) ? product.description : []).slice(0, 300)
+  const desc = extractText(Array.isArray(product.description) ? product.description : []).slice(0, 300)
+  const inStock = (product.variants ?? []).some((v) => Number(v.stock ?? 0) > 0)
+  const productUrl = `https://sportcore.kg/product/${product.slug}`
 
-const inStock = (product.variants ?? []).some(v => Number(v.stock ?? 0) > 0)
-
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "Product",
-  name: product.title,
-  image: product.imageUrl ? [product.imageUrl] : [],
-  description: desc || product.title,
-  offers: {
-    "@type": "Offer",
-    url: `https://sportcore.kg/product/${product.slug}`,
-    priceCurrency: "KGS",
-    price: String(product.price),
-    availability: inStock
-      ? "https://schema.org/InStock"
-      : "https://schema.org/OutOfStock",
-  },
-}
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.title,
+    description: product.seo_desc?.trim() || desc || product.title,
+    image: product.imageUrl ? [product.imageUrl] : [],
+    sku: product.slug,
+    brand: {
+      '@type': 'Brand',
+      name: 'SPORTCORE',
+    },
+    offers: {
+      '@type': 'Offer',
+      url: productUrl,
+      priceCurrency: 'KGS',
+      price: String(product.price),
+      availability: inStock
+        ? 'https://schema.org/InStock'
+        : 'https://schema.org/OutOfStock',
+    },
+  }
 
   return (
     <>
@@ -82,23 +97,20 @@ const jsonLd = {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <main className="container mx-auto px-4 py-8">
-      {/* Общая сетка: слева единая карточка товара (фото+описание), справа покупка */}
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-        {/* Слева: единый красивый блок */}
-        <ProductInfoCard product={product} />
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+          <ProductInfoCard product={product} />
 
-        {/* Справа: название, цена, параметры/кнопка */}
-        <div className="flex flex-col space-y-4">
-          <h1 className="text-3xl font-bold text-[#1a1f4b]">{product.title}</h1>
+          <div className="flex flex-col space-y-4">
+            <h1 className="text-3xl font-bold text-[#1a1f4b]">{product.title}</h1>
 
-          <p className="text-2xl font-semibold text-gray-800">
-            {Number(product.price).toLocaleString()} сом
-          </p>
+            <p className="text-2xl font-semibold text-gray-800">
+              {Number(product.price).toLocaleString()} сом
+            </p>
 
-          <CartControls product={product} />
+            <CartControls product={product} />
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
     </>
   )
 }

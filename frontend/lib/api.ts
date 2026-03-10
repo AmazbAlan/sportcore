@@ -15,7 +15,7 @@ export type Media = {
 
 export type VariantColor = {
   name: string
-  image?: Media[] // multiple media
+  image?: Media[]
 }
 
 export type ProductVariant = {
@@ -34,6 +34,8 @@ export type Product = {
   categorySlug: string
   description: RichTextBlock[]
   variants: ProductVariant[]
+  seo_title?: string
+  seo_desc?: string
 }
 
 export type Category = {
@@ -54,14 +56,11 @@ interface StrapiListResponse<T> {
 }
 
 async function fetchJSON<T>(url: string, init?: RequestInit): Promise<T> {
-  // Если в проде забыли env — хотя бы увидишь это в логах
   if (!API_URL) {
     console.error('API_URL is empty. Check NEXT_PUBLIC_STRAPI_URL / STRAPI_URL')
   }
 
   const res = await fetch(url, {
-    // По умолчанию кешируем публичные GET для стабильного SSR/SEO.
-    // Если нужно отключить кеш — передай { cache: 'no-store' } как второй аргумент.
     next: { revalidate: 3600 },
     headers: {
       Accept: 'application/json',
@@ -88,25 +87,15 @@ function withApiUrl(url?: string | null): string | null {
   return `${API_URL}${url.startsWith('/') ? '' : '/'}${url}`
 }
 
-/**
- * Универсально достаём URL из media:
- * - Strapi v5: [{ url, formats... }] или { url, ... }
- * - Strapi v4: { data: { attributes: { url } } } / { data: [ ... ] }
- * - иногда просто строка
- */
 function pickMediaUrl(anyMedia: any): string | null {
   if (!anyMedia) return null
 
-  // строка
   if (typeof anyMedia === 'string') return withApiUrl(anyMedia)
 
-  // объект v5: { url: "https://..." }
   if (typeof anyMedia?.url === 'string') return withApiUrl(anyMedia.url)
 
-  // v4: { data: ... }
   const data = anyMedia?.data ?? anyMedia
 
-  // массив (v5: image: [ { url } ])
   if (Array.isArray(data)) {
     const first = data[0]
     const u =
@@ -117,7 +106,6 @@ function pickMediaUrl(anyMedia: any): string | null {
     return withApiUrl(u)
   }
 
-  // объект (single)
   const u =
     data?.url ||
     data?.attributes?.url ||
@@ -127,10 +115,6 @@ function pickMediaUrl(anyMedia: any): string | null {
   return withApiUrl(u)
 }
 
-/**
- * ТВОЙ Strapi валидатор ломает populate[variants][populate]...
- * Самый совместимый способ: populate как массив строк + dot paths.
- */
 function productPopulateQuery(): URLSearchParams {
   const qp = new URLSearchParams()
 
@@ -144,14 +128,12 @@ function productPopulateQuery(): URLSearchParams {
 }
 
 function flattenProduct(entry: any): Product {
-  // Strapi v5 в твоём ответе отдаёт поля прямо на entry
   const raw = entry?.attributes ?? entry ?? {}
 
   const slug = raw.slug ?? ''
   const title = raw.title ?? ''
   const price = Number(raw.price ?? 0)
 
-  // картинка товара в твоём API: image: [{ url: "https://..." }]
   const candidate =
     raw.image ??
     raw.images ??
@@ -163,20 +145,27 @@ function flattenProduct(entry: any): Product {
 
   const imageUrl = pickMediaUrl(candidate) || '/placeholder.jpg'
 
-  // category slug (у тебя иногда null)
   let categorySlug = ''
   if (raw.category?.data?.attributes?.slug) categorySlug = raw.category.data.attributes.slug
   else if (raw.category?.slug) categorySlug = raw.category.slug
 
   const description: RichTextBlock[] = raw.description ?? []
 
+  const seo_title =
+    typeof raw.seo_title === 'string' && raw.seo_title.trim()
+      ? raw.seo_title.trim()
+      : undefined
+
+  const seo_desc =
+    typeof raw.seo_desc === 'string' && raw.seo_desc.trim()
+      ? raw.seo_desc.trim()
+      : undefined
+
   const variants: ProductVariant[] = Array.isArray(raw.variants)
     ? raw.variants.map((v: any) => {
         const colors: VariantColor[] = Array.isArray(v?.color)
           ? v.color.map((c: any) => {
               const name = String(c?.name ?? '')
-
-              // в твоём API c.image: [{ url: ... }]
               const mediaCandidate = c?.image ?? c?.images ?? null
 
               let images: Media[] | undefined = undefined
@@ -201,7 +190,7 @@ function flattenProduct(entry: any): Product {
         return {
           id: Number(v?.id ?? 0),
           size: String(v?.size ?? ''),
-          stock: Number(v?.stock ?? 0), // ✅ stock у тебя иногда строкой
+          stock: Number(v?.stock ?? 0),
           color: colors.length ? colors : undefined,
         }
       })
@@ -216,6 +205,8 @@ function flattenProduct(entry: any): Product {
     categorySlug,
     description,
     variants,
+    seo_title,
+    seo_desc,
   }
 }
 
