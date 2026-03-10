@@ -7,36 +7,38 @@ interface CategoryCardProps {
   href: string
 }
 
-export default function CategoryCard({
-  title,
-  image,
-  href,
-}: CategoryCardProps) {
+export default function CategoryCard({ title, image, href }: CategoryCardProps) {
   return (
     <Link
       href={href}
       className="
-      group relative aspect-square rounded-xl overflow-hidden
-      bg-white shadow-md hover:shadow-xl
-      transition duration-300
+      group
+      bg-white
+      rounded-xl
+      overflow-hidden
+      shadow-md
+      hover:shadow-lg
+      transition
+      flex
+      flex-col
       "
     >
-      <Image
-        src={image || '/placeholder.jpg'}
-        alt={title}
-        fill
-        className="object-contain p-6 transition group-hover:scale-110"
-        unoptimized
-      />
+      {/* IMAGE */}
 
-      <div
-        className="
-        absolute inset-0 bg-black/40 opacity-0
-        group-hover:opacity-100 transition
-        flex items-center justify-center
-        "
-      >
-        <span className="text-white text-xl font-semibold text-center px-4">
+      <div className="relative aspect-square bg-gray-50">
+        <Image
+          src={image || '/placeholder.jpg'}
+          alt={title}
+          fill
+          className="object-contain p-6 group-hover:scale-105 transition"
+          unoptimized
+        />
+      </div>
+
+      {/* TITLE */}
+
+      <div className="p-4 text-center border-t">
+        <span className="font-semibold text-[#1a1f4b]">
           {title}
         </span>
       </div>
