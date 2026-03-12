@@ -31,7 +31,10 @@ export default async function FeaturedProducts() {
             image={product.imageUrl}
           />
         ))}
+        
       </div>
     </section>
   )
 }
+const featured = await getFeaturedProducts()
+console.log(featured)
