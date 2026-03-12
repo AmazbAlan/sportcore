@@ -27,7 +27,7 @@ export default function ProductCard({
       <div className="relative w-full h-52 mb-4">
 
         {/* Бейдж Хит (не влияет на layout) */}
-        <div className="absolute top-2 left-2 z-10 bg-yellow-400 text-[#1a1f4b] text-xs font-semibold px-3 py-1 rounded-full shadow">
+        <div className="absolute top-2 left-2 z-10 bg-yellow-400 text-[#1a1f4b] text-xs font-semibold px-3 py-1 rounded-md shadow">
           Хит
         </div>
 
