@@ -21,12 +21,12 @@ export default function ProductCard({
   return (
     <Link
       href={linkHref}
-      className="group block bg-white rounded shadow transition-transform transform hover:shadow-lg hover:scale-105"
+      className="group block bg-white rounded-lg shadow-sm transition-all hover:shadow-lg hover:-translate-y-1"
     >
-      {/* контейнер изображения */}
-      <div className="relative w-full h-52 mb-4">
+      {/* Image container */}
+      <div className="relative w-full h-44 sm:h-52 mb-4">
 
-        {/* Бейдж Хит (не влияет на layout) */}
+        {/* Badge */}
         <div className="absolute top-2 left-2 z-10 bg-yellow-400 text-[#1a1f4b] text-xs font-semibold px-3 py-1 rounded-md shadow">
           Хит
         </div>
@@ -35,18 +35,22 @@ export default function ProductCard({
           src={image}
           alt={title}
           fill
-          className="object-contain"
+          sizes="(max-width: 768px) 50vw, 25vw"
+          className="object-contain p-2"
         />
       </div>
 
+      {/* Text */}
       <div className="px-4 pb-4 text-center">
-        <h3 className="font-medium mb-2 text-[#1a1f4b] group-hover:text-black transition-colors">
+
+        <h3 className="font-medium mb-2 text-[#1a1f4b] group-hover:text-black transition-colors line-clamp-2 text-sm sm:text-base">
           {title}
         </h3>
 
-        <p className="font-bold text-[#1a1f4b] group-hover:text-black transition-colors">
+        <p className="font-bold text-[#1a1f4b] group-hover:text-black transition-colors text-base sm:text-lg">
           {price.toLocaleString()} сом
         </p>
+
       </div>
     </Link>
   )
