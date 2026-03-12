@@ -5,7 +5,7 @@ import Link from 'next/link'
 
 export default async function FeaturedProducts() {
   const featured = await getFeaturedProducts()
-
+  console.log(featured)
   return (
     <section className="max-w-7xl mx-auto px-4 py-16">
       <div className="flex items-center justify-between mb-6">
@@ -36,5 +36,4 @@ export default async function FeaturedProducts() {
     </section>
   )
 }
-const featured = await getFeaturedProducts()
-console.log(featured)
+
