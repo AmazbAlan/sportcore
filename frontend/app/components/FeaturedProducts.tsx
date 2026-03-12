@@ -5,7 +5,7 @@ import Link from 'next/link'
 
 export default async function FeaturedProducts() {
   const featured = await getFeaturedProducts()
-  console.log(featured)
+
   return (
     <section className="max-w-7xl mx-auto px-4 py-16">
       <div className="flex items-center justify-between mb-6">
@@ -24,16 +24,14 @@ export default async function FeaturedProducts() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
         {featured.map((product) => (
           <ProductCard
-            key={product.id}
+            key={product.slug}   // исправлено
             slug={product.slug}
             title={product.title}
             price={product.price}
             image={product.imageUrl}
           />
         ))}
-        
       </div>
     </section>
   )
 }
-
