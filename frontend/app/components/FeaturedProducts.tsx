@@ -8,6 +8,7 @@ export default async function FeaturedProducts() {
 
   return (
     <section className="max-w-7xl mx-auto px-4 py-16">
+
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-[#1a1f4b]">
           Хиты продаж
@@ -21,10 +22,28 @@ export default async function FeaturedProducts() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+      {/* MOBILE SLIDER */}
+      <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory md:hidden pb-4">
+        {featured.map((product) => (
+          <div
+            key={product.slug}
+            className="min-w-[48%] snap-start"
+          >
+            <ProductCard
+              slug={product.slug}
+              title={product.title}
+              price={product.price}
+              image={product.imageUrl}
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* DESKTOP GRID */}
+      <div className="hidden md:grid md:grid-cols-4 gap-6">
         {featured.map((product) => (
           <ProductCard
-            key={product.slug}   // исправлено
+            key={product.slug}
             slug={product.slug}
             title={product.title}
             price={product.price}
@@ -32,6 +51,7 @@ export default async function FeaturedProducts() {
           />
         ))}
       </div>
+
     </section>
   )
 }
