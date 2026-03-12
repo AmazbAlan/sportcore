@@ -1,7 +1,7 @@
 import HeroBanner from './components/HeroBanner'
 import FeaturedProducts from './components/FeaturedProducts'
 import CategoryGrid from './components/CategoryGrid'
-import NewestArrivals from './components/NewestArrivals'
+
 
 
 export const metadata = {
@@ -26,7 +26,6 @@ export default function HomePage() {
       <HeroBanner />
       <FeaturedProducts />
       <CategoryGrid />
-      {/* <NewestArrivals /> */}
     </main>
   )
 }
