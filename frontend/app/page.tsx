@@ -1,6 +1,7 @@
 import HeroBanner from './components/HeroBanner'
 import FeaturedProducts from './components/FeaturedProducts'
 import CategoryGrid from './components/CategoryGrid'
+import Advantages from './components/Advantages'
 
 
 
@@ -24,6 +25,7 @@ export default function HomePage() {
   return (
     <main>
       <HeroBanner />
+      <Advantages /> 
       <FeaturedProducts />
       <CategoryGrid />
     </main>
