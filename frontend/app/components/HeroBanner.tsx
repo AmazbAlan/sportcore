@@ -67,27 +67,28 @@ export default function HeroBanner() {
           </p>
 
           {/* Кнопки */}
-          <div className="mt-10 flex flex-col sm:flex-row gap-4">
+          <div className="mt-10 flex flex-col sm:flex-row gap-4 items-start">
 
-            <Link
-              href="/category"
-              className="
-                bg-yellow-400 
-                text-[#1a1f4b] 
-                px-8 py-4 
-                rounded-xl 
-                font-semibold 
-                text-base
-                hover:bg-yellow-300 
-                transition 
-                hover:scale-105
-                shadow-xl
-              "
-            >
-              Перейти в каталог
-            </Link>
+              <Link
+                href="/category"
+                className="
+                  inline-block
+                  bg-yellow-400 
+                  text-[#1a1f4b] 
+                  px-8 py-4 
+                  rounded-xl 
+                  font-semibold 
+                  text-base
+                  hover:bg-yellow-300 
+                  transition 
+                  hover:scale-105
+                  shadow-xl
+                "
+              >
+                Перейти в каталог
+              </Link>
 
-          </div>
+            </div>
 
         </motion.div>
 
