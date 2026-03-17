@@ -25,12 +25,13 @@ export default function CategoryCard({ title, image, href }: CategoryCardProps) 
         overflow-hidden
       "
     >
-      <div className="relative w-full h-full p-4 md:p-6 flex items-center justify-center">
+      <div className="flex items-center justify-center h-full p-4">
         <Image
           src={image}
           alt={title}
-          fill
-          className="object-contain"
+          width={300}
+          height={300}
+          className="object-contain w-full h-full"
           unoptimized
         />
       </div>
