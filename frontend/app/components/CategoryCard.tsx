@@ -25,29 +25,41 @@ export default function CategoryCard({ title, image, href }: CategoryCardProps) 
         overflow-hidden
       "
     >
-      <div className="flex items-center justify-center h-full p-4">
+      {/* 📦 Картинка */}
+      <div className="relative w-full h-full flex items-center justify-center">
         <Image
           src={image}
           alt={title}
-          width={300}
-          height={300}
-          className="object-contain w-full h-full"
+          fill
+          className="object-contain scale-110"
           unoptimized
         />
       </div>
 
+      {/* 🏷️ Название ВСЕГДА видно */}
       <div className="
-        absolute inset-0 
-        bg-black/40 
-        opacity-0 
-        group-hover:opacity-100 
-        transition 
-        flex items-center justify-center
+        absolute bottom-0 left-0 right-0
+        bg-gradient-to-t from-black/70 via-black/40 to-transparent
+        p-3 md:p-4
       ">
-        <span className="text-white text-lg md:text-xl font-semibold text-center px-4">
+        <span className="
+          text-white 
+          text-sm md:text-base 
+          font-semibold 
+          leading-tight
+        ">
           {title}
         </span>
       </div>
+
+      {/* ✨ Hover усиление */}
+      <div className="
+        absolute inset-0 
+        bg-black/10 
+        opacity-0 
+        group-hover:opacity-100 
+        transition
+      " />
     </Link>
   )
 }
