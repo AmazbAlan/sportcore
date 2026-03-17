@@ -14,34 +14,55 @@ export default function HeroBanner() {
         alt="Sportcore"
         fill
         priority
-        className="object-cover scale-105"
+        className="object-cover scale-110"
       />
 
-      {/* Затемнение + градиент слева (важно!) */}
+      {/* Градиент */}
       <div className="absolute inset-0 bg-black/50" />
-      <div className="absolute inset-0 bg-gradient-to-r from-[#0f122e]/90 via-[#0f122e]/60 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#0f122e]/95 via-[#0f122e]/70 to-transparent" />
 
       {/* Контент */}
-      <div className="relative z-10 max-w-7xl mx-auto w-full px-4">
+      <div className="relative z-10 max-w-7xl mx-auto w-full px-6">
 
         <motion.div
-          initial={{ opacity: 0, x: -40 }}
+          initial={{ opacity: 0, x: -60 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.7 }}
-          className="max-w-xl"
+          className="max-w-2xl"
         >
 
           {/* Заголовок */}
-          <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold leading-tight text-white">
-            Всё для спорта  
-            <br />
-            <span className="text-yellow-400">
+          <h1 className="
+            text-4xl 
+            sm:text-6xl 
+            md:text-7xl 
+            font-extrabold 
+            leading-[1.05] 
+            tracking-tight 
+            text-white
+          ">
+            <span className="block mb-3">
+              Всё для спорта
+            </span>
+
+            <span className="
+              block 
+              text-yellow-400 
+              drop-shadow-[0_4px_20px_rgba(255,200,0,0.35)]
+            ">
               в SPORTCORE
             </span>
           </h1>
 
           {/* Подзаголовок */}
-          <p className="mt-6 text-base sm:text-lg text-white/80">
+          <p className="
+            mt-7 
+            text-base 
+            sm:text-lg 
+            text-white/80 
+            max-w-md 
+            leading-relaxed
+          ">
             Качественные товары для тренировок и активного образа жизни
           </p>
 
@@ -56,11 +77,11 @@ export default function HeroBanner() {
                 px-8 py-4 
                 rounded-xl 
                 font-semibold 
+                text-base
                 hover:bg-yellow-300 
                 transition 
                 hover:scale-105
                 shadow-xl
-                text-center
               "
             >
               Перейти в каталог
@@ -77,7 +98,6 @@ export default function HeroBanner() {
                 backdrop-blur
                 hover:bg-white/10 
                 transition
-                text-center
               "
             >
               Хиты продаж
@@ -89,8 +109,8 @@ export default function HeroBanner() {
 
       </div>
 
-      {/* Плавный переход вниз */}
-      <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-white to-transparent" />
+      {/* Плавный низ */}
+      <div className="absolute bottom-0 left-0 w-full h-40 bg-gradient-to-t from-white to-transparent" />
 
     </section>
   )
