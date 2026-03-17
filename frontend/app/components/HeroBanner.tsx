@@ -87,22 +87,6 @@ export default function HeroBanner() {
               Перейти в каталог
             </Link>
 
-            <Link
-              href="/category"
-              className="
-                border border-white/20 
-                text-white 
-                px-8 py-4 
-                rounded-xl 
-                font-semibold
-                backdrop-blur
-                hover:bg-white/10 
-                transition
-              "
-            >
-              Хиты продаж
-            </Link>
-
           </div>
 
         </motion.div>
