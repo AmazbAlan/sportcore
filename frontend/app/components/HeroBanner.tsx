@@ -6,7 +6,7 @@ import { motion } from 'framer-motion'
 
 export default function HeroBanner() {
   return (
-    <section className="relative w-full min-h-[85vh] flex items-center justify-center overflow-hidden">
+    <section className="relative w-full min-h-[85vh] flex items-center overflow-hidden">
 
       {/* Фон */}
       <Image
@@ -17,40 +17,36 @@ export default function HeroBanner() {
         className="object-cover scale-105"
       />
 
-      {/* Мягкое затемнение */}
-      <div className="absolute inset-0 bg-[#0f122e]/70" />
+      {/* Затемнение + градиент слева (важно!) */}
+      <div className="absolute inset-0 bg-black/50" />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#0f122e]/90 via-[#0f122e]/60 to-transparent" />
 
       {/* Контент */}
-      <div className="relative z-10 max-w-5xl mx-auto px-4 text-center">
+      <div className="relative z-10 max-w-7xl mx-auto w-full px-4">
 
-        {/* Лёгкая анимация появления */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          initial={{ opacity: 0, x: -40 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.7 }}
+          className="max-w-xl"
         >
 
-          {/* Тег */}
-          <div className="inline-block mb-4 px-4 py-1 rounded-full bg-white/10 backdrop-blur text-sm text-white/80 border border-white/10">
-            Бишкек • Доставка за 1 день
-          </div>
-
           {/* Заголовок */}
-          <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold leading-tight text-white">
+          <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold leading-tight text-white">
             Всё для спорта  
             <br />
             <span className="text-yellow-400">
-              и активной жизни
+              в SPORTCORE
             </span>
           </h1>
 
           {/* Подзаголовок */}
-          <p className="mt-5 text-base sm:text-lg text-white/80 max-w-2xl mx-auto">
-            Фитнес, бокс, йога, мячи и многое другое — всё в одном месте
+          <p className="mt-6 text-base sm:text-lg text-white/80">
+            Качественные товары для тренировок и активного образа жизни
           </p>
 
           {/* Кнопки */}
-          <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="mt-10 flex flex-col sm:flex-row gap-4">
 
             <Link
               href="/category"
@@ -63,7 +59,8 @@ export default function HeroBanner() {
                 hover:bg-yellow-300 
                 transition 
                 hover:scale-105
-                shadow-lg
+                shadow-xl
+                text-center
               "
             >
               Перейти в каталог
@@ -80,6 +77,7 @@ export default function HeroBanner() {
                 backdrop-blur
                 hover:bg-white/10 
                 transition
+                text-center
               "
             >
               Хиты продаж
