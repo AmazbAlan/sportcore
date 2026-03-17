@@ -8,9 +8,32 @@ import {
   MessageCircle
 } from 'lucide-react'
 
+const items = [
+  {
+    icon: Truck,
+    title: 'Быстрая доставка',
+    desc: 'По Бишкеку — в течение 1 дня'
+  },
+  {
+    icon: ShieldCheck,
+    title: 'Проверенное качество',
+    desc: 'Каждый товар проходит проверку'
+  },
+  {
+    icon: RefreshCcw,
+    title: 'Возврат 14 дней',
+    desc: 'Если есть брак — обмен или возврат'
+  },
+  {
+    icon: MessageCircle,
+    title: 'Помощь в выборе',
+    desc: 'Подскажем лучший вариант'
+  }
+]
+
 export default function Advantages() {
   return (
-    <section className="max-w-7xl mx-auto px-4 py-16">
+    <section className="max-w-7xl mx-auto px-4 py-14">
 
       {/* Заголовок */}
       <div className="text-center mb-10">
@@ -22,56 +45,13 @@ export default function Advantages() {
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
-
-        {/* 🔥 ГЛАВНАЯ */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="
-            col-span-2 md:col-span-2
-            rounded-2xl p-6
-            bg-gradient-to-br from-[#1a1f4b] to-[#2a2f6b]
-            text-white
-            relative overflow-hidden
-            shadow-lg
-            hover:shadow-2xl
-            transition
-          "
-        >
-          <Truck className="w-7 h-7 mb-4 text-yellow-400" />
-
-          <h3 className="text-lg font-semibold mb-1">
-            Быстрая доставка
-          </h3>
-
-          <p className="text-white/80 text-sm">
-            По Бишкеку — в течение 1 дня
-          </p>
-
-          {/* glow */}
-          <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-yellow-400/20 blur-3xl rounded-full" />
-        </motion.div>
-
-        {/* Остальные */}
-        {[
-          {
-            icon: ShieldCheck,
-            title: 'Проверенное качество',
-            desc: 'Каждый товар проходит проверку'
-          },
-          {
-            icon: RefreshCcw,
-            title: 'Возврат 14 дней',
-            desc: 'Если есть брак — обмен или возврат'
-          },
-          {
-            icon: MessageCircle,
-            title: 'Помощь в выборе',
-            desc: 'Подскажем лучший вариант'
-          }
-        ].map((item, i) => {
+      {/* Сетка */}
+      <div className="
+        grid gap-4
+        grid-cols-2
+        md:grid-cols-4
+      ">
+        {items.map((item, i) => {
           const Icon = item.icon
 
           return (
@@ -79,18 +59,18 @@ export default function Advantages() {
               key={i}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
+              transition={{ duration: 0.4, delay: i * 0.05 }}
               viewport={{ once: true }}
               className="
                 group
-                p-5
+                p-4 md:p-6
                 rounded-2xl
                 bg-white
                 border border-gray-100
                 shadow-sm
-
                 hover:shadow-lg
                 hover:-translate-y-1
+                active:scale-[0.97]
                 transition-all
               "
             >
@@ -101,17 +81,18 @@ export default function Advantages() {
                 transition
               " />
 
-              <h4 className="text-sm font-semibold text-[#1a1f4b]">
+              <h4 className="text-sm md:text-base font-semibold text-[#1a1f4b]">
                 {item.title}
               </h4>
 
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs md:text-sm text-gray-500 mt-1">
                 {item.desc}
               </p>
             </motion.div>
           )
         })}
       </div>
+
     </section>
   )
 }
