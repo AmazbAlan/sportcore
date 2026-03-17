@@ -1,65 +1,64 @@
 'use client'
 
-import { Swiper, SwiperSlide } from 'swiper/react'
-import 'swiper/css'
-
+import { useState } from 'react'
 import CategoryCard from '../components/CategoryCard'
-import AnimatedCard from '../components/AnimatedCard'
 
-type Category = {
-  name: string
-  slug: string
-  imageUrl: string
-}
+export default function CategoryPageClient({ categories }: any) {
+  const [query, setQuery] = useState('')
 
-export default function CategoryGridClient({
-  categories
-}: {
-  categories: Category[]
-}) {
-  const items = categories.slice(0, 5)
+  const filtered = categories.filter((c: any) =>
+    c.name.toLowerCase().includes(query.toLowerCase())
+  )
 
   return (
-    <section className="max-w-7xl mx-auto px-4 py-12">
+    <main className="max-w-7xl mx-auto px-4 py-12">
 
-      <h2 className="text-2xl md:text-3xl font-bold text-[#1a1f4b] mb-6 md:mb-10">
-        Популярные категории
-      </h2>
+      <h1 className="text-3xl font-bold text-[#1a1f4b] mb-8">
+        Каталог
+      </h1>
 
-      {/* 📱 MOBILE SWIPER */}
-      <div className="block md:hidden">
-        <Swiper
-          spaceBetween={12}
-          slidesPerView={1.3}
-          className="!overflow-visible"
-        >
-          {items.map((cat) => (
-            <SwiperSlide key={cat.slug} className="!h-auto">
-              <AnimatedCard>
-                <CategoryCard
-                  title={cat.name}
-                  image={cat.imageUrl}
-                  href={`/category/${cat.slug}`}
-                />
-              </AnimatedCard>
-            </SwiperSlide>
-          ))}
-        </Swiper>
+      {/* SEARCH */}
+
+      <div className="mb-10 max-w-md">
+        <input
+          type="text"
+          placeholder="Поиск категории..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="
+          w-full
+          border
+          border-gray-300
+          rounded-lg
+          px-4
+          py-3
+          shadow-sm
+          focus:ring-2
+          focus:ring-blue-500
+          outline-none
+          "
+        />
       </div>
 
-      {/* 💻 DESKTOP GRID */}
-      <div className="hidden md:grid grid-cols-3 lg:grid-cols-5 gap-6">
-        {items.map((cat, i) => (
-          <AnimatedCard key={cat.slug} delay={i * 0.1}>
+      {/* CATEGORIES */}
+
+      {filtered.length === 0 ? (
+        <div className="text-center py-20 text-gray-500 text-lg">
+          Категории не найдены
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {filtered.map((cat: any) => (
             <CategoryCard
+              key={cat.slug}
               title={cat.name}
               image={cat.imageUrl}
               href={`/category/${cat.slug}`}
             />
-          </AnimatedCard>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
-    </section>
+    </main>
   )
 }
