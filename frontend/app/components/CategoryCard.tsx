@@ -18,7 +18,8 @@ export default function CategoryCard({ title, image, href }: CategoryCardProps) 
       className="
         group 
         relative 
-        aspect-square 
+        w-full
+        h-[140px] sm:h-[180px] md:h-[220px] lg:h-[260px]
         bg-white 
         rounded-2xl 
         shadow-sm 
@@ -51,7 +52,7 @@ export default function CategoryCard({ title, image, href }: CategoryCardProps) 
         </span>
       </div>
 
-      {/* ✨ hover эффект */}
+      {/* ✨ hover */}
       <div className="
         absolute inset-0 
         bg-black/10 

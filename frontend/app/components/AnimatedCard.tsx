@@ -13,11 +13,7 @@ export default function AnimatedCard({
     <motion.div
       initial={{ opacity: 0, y: 30, scale: 0.95 }}
       whileInView={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{
-        duration: 0.5,
-        delay,
-        ease: 'easeOut'
-      }}
+      transition={{ duration: 0.5, delay }}
       viewport={{ once: true }}
     >
       {children}
