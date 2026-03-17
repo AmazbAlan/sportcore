@@ -8,6 +8,10 @@ interface CategoryCardProps {
 }
 
 export default function CategoryCard({ title, image, href }: CategoryCardProps) {
+  const fullImage = image?.startsWith('http')
+    ? image
+    : `${process.env.NEXT_PUBLIC_STRAPI_URL}${image}`
+
   return (
     <Link
       href={href}
@@ -28,7 +32,7 @@ export default function CategoryCard({ title, image, href }: CategoryCardProps) 
       {/* 📦 Картинка */}
       <div className="relative w-full h-full flex items-center justify-center">
         <Image
-          src={image}
+          src={fullImage}
           alt={title}
           fill
           className="object-contain scale-110"
@@ -36,23 +40,18 @@ export default function CategoryCard({ title, image, href }: CategoryCardProps) 
         />
       </div>
 
-      {/* 🏷️ Название ВСЕГДА видно */}
+      {/* 🏷️ Название */}
       <div className="
         absolute bottom-0 left-0 right-0
         bg-gradient-to-t from-black/70 via-black/40 to-transparent
         p-3 md:p-4
       ">
-        <span className="
-          text-white 
-          text-sm md:text-base 
-          font-semibold 
-          leading-tight
-        ">
+        <span className="text-white text-sm md:text-base font-semibold">
           {title}
         </span>
       </div>
 
-      {/* ✨ Hover усиление */}
+      {/* ✨ hover эффект */}
       <div className="
         absolute inset-0 
         bg-black/10 
