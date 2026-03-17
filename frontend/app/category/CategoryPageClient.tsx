@@ -54,6 +54,7 @@ export default function CategoryPageClient({ categories }: any) {
               title={cat.name}
               image={cat.imageUrl}
               href={`/category/${cat.slug}`}
+              variant="grid"
             />
           ))}
         </div>
