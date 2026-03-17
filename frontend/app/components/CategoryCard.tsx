@@ -28,7 +28,7 @@ export default function CategoryCard({
         bg-white shadow-sm hover:shadow-md transition-all duration-300
       "
     >
-      {/* 🔲 FEATURED (КВАДРАТ) */}
+      {/* 🔲 FEATURED — КВАДРАТ */}
       {!isGrid && (
         <div className="relative w-full aspect-square">
           <Image
@@ -36,17 +36,18 @@ export default function CategoryCard({
             alt={title}
             fill
             className="
-              object-contain p-6
+              object-contain
+              p-6
               group-hover:scale-105
               transition-transform duration-300
             "
             unoptimized
           />
 
-          {/* название */}
+          {/* нормальный градиент */}
           <div className="
             absolute bottom-0 left-0 right-0
-            bg-gradient-to-t from-black/60 to-transparent
+            bg-gradient-to-t from-black/50 to-transparent
             p-3
           ">
             <span className="text-white text-sm font-semibold">
@@ -56,9 +57,9 @@ export default function CategoryCard({
         </div>
       )}
 
-      {/* 🧱 GRID (КАТАЛОГ — ФОТО НА ВСЮ КАРТОЧКУ) */}
+      {/* 🧱 GRID — КАТАЛОГ */}
       {isGrid && (
-        <div className="relative w-full h-[160px] md:h-[200px]">
+        <div className="relative w-full aspect-square">
           <Image
             src={fullImage}
             alt={title}
@@ -71,18 +72,13 @@ export default function CategoryCard({
             unoptimized
           />
 
-          {/* затемнение */}
-          <div className="
-            absolute inset-0
-            bg-black/20
-          " />
-
-          {/* название */}
+          {/* ЛЕГКИЙ градиент (НЕ душит картинку) */}
           <div className="
             absolute bottom-0 left-0 right-0
+            bg-gradient-to-t from-black/40 via-black/10 to-transparent
             p-3
           ">
-            <span className="text-white text-sm md:text-base font-semibold">
+            <span className="text-white text-sm font-semibold">
               {title}
             </span>
           </div>
