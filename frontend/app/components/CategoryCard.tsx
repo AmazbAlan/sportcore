@@ -24,66 +24,40 @@ export default function CategoryCard({
     <Link
       href={href}
       className="
-        group relative w-full overflow-hidden rounded-2xl
-        bg-white shadow-sm hover:shadow-md transition-all duration-300
+        group relative w-full aspect-square overflow-hidden rounded-2xl
       "
     >
-      {/* 🔲 FEATURED — КВАДРАТ */}
-      {!isGrid && (
-        <div className="relative w-full aspect-square">
-          <Image
-            src={fullImage}
-            alt={title}
-            fill
-            className="
-              object-contain
-              p-6
-              group-hover:scale-105
-              transition-transform duration-300
-            "
-            unoptimized
-          />
+      {/* IMAGE */}
+      <Image
+        src={fullImage}
+        alt={title}
+        fill
+        className="
+          object-cover
+          group-hover:scale-105
+          transition-transform duration-300
+        "
+        unoptimized
+      />
 
-          {/* нормальный градиент */}
-          <div className="
-            absolute bottom-0 left-0 right-0
-            bg-gradient-to-t from-black/50 to-transparent
-            p-3
-          ">
-            <span className="text-white text-sm font-semibold">
-              {title}
-            </span>
-          </div>
-        </div>
-      )}
+      {/* GRADIENT */}
+      <div
+        className={`
+          absolute inset-0
+          ${
+            isGrid
+              ? 'bg-gradient-to-t from-black/50 via-black/10 to-transparent'
+              : 'bg-gradient-to-t from-black/60 to-transparent'
+          }
+        `}
+      />
 
-      {/* 🧱 GRID — КАТАЛОГ */}
-      {isGrid && (
-        <div className="relative w-full aspect-square">
-          <Image
-            src={fullImage}
-            alt={title}
-            fill
-            className="
-              object-cover
-              group-hover:scale-105
-              transition-transform duration-300
-            "
-            unoptimized
-          />
-
-          {/* ЛЕГКИЙ градиент (НЕ душит картинку) */}
-          <div className="
-            absolute bottom-0 left-0 right-0
-            bg-gradient-to-t from-black/40 via-black/10 to-transparent
-            p-3
-          ">
-            <span className="text-white text-sm font-semibold">
-              {title}
-            </span>
-          </div>
-        </div>
-      )}
+      {/* TITLE */}
+      <div className="absolute bottom-0 left-0 right-0 p-3">
+        <span className="text-white text-sm font-semibold leading-tight">
+          {title}
+        </span>
+      </div>
     </Link>
   )
 }
