@@ -48,16 +48,16 @@ export default function CategoryPageClient({ categories }: any) {
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {filtered.map((cat: any) => (
-            <CategoryCard
-              key={cat.slug}
-              title={cat.name}
-              image={cat.imageUrl}
-              href={`/category/${cat.slug}`}
-              variant="grid"
-            />
-          ))}
-        </div>
+            {filtered.map((cat: any) => (
+              <CategoryCard
+                key={cat.slug}
+                title={cat.name}
+                image={cat.imageUrl}
+                href={`/category/${cat.slug}`}
+                variant="grid"
+              />
+            ))}
+          </div>
       )}
 
     </main>

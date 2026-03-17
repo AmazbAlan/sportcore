@@ -18,18 +18,19 @@ export default function CategoryCard({
     ? image
     : `${process.env.NEXT_PUBLIC_STRAPI_URL}${image}`
 
-  // 🎯 РАЗНЫЕ СТИЛИ
   const isGrid = variant === 'grid'
 
   return (
     <Link
       href={href}
       className={`
-        group relative w-full overflow-hidden transition-all duration-300
+        group relative w-full overflow-hidden
+        rounded-2xl bg-white
+        transition-all duration-300
         
         ${isGrid
-          ? 'bg-white rounded-xl shadow-sm hover:shadow-md'
-          : 'bg-white rounded-2xl shadow-sm hover:shadow-lg active:scale-95'
+          ? 'shadow-sm hover:shadow-md'
+          : 'shadow-md hover:shadow-xl'
         }
       `}
     >
@@ -39,8 +40,8 @@ export default function CategoryCard({
           relative w-full flex items-center justify-center
           
           ${isGrid
-            ? 'h-[120px] sm:h-[140px]'
-            : 'h-[140px] sm:h-[180px] md:h-[220px] lg:h-[260px]'
+            ? 'h-[140px]'
+            : 'h-[160px] md:h-[200px]'
           }
         `}
       >
@@ -48,48 +49,31 @@ export default function CategoryCard({
           src={fullImage}
           alt={title}
           fill
-          className={`
-            ${isGrid
-              ? 'object-contain p-4 group-hover:scale-105'
-              : 'object-contain scale-110 group-hover:scale-115'
-            }
+          className="
+            object-contain
+            p-4
+            group-hover:scale-105
             transition-transform duration-300
-          `}
+          "
           unoptimized
         />
       </div>
 
-      {/* 🏷️ НАЗВАНИЕ */}
-      {isGrid ? (
-        // 📦 ДЛЯ КАТАЛОГА (чистый стиль)
-        <div className="p-3">
-          <span className="text-sm font-medium text-gray-800">
-            {title}
-          </span>
-        </div>
-      ) : (
-        // 🔥 ДЛЯ FEATURED
-        <div className="
-          absolute bottom-0 left-0 right-0
-          bg-gradient-to-t from-black/70 via-black/40 to-transparent
-          p-3 md:p-4
+      {/* 🏷️ ТЕКСТ */}
+      <div
+        className={`
+          px-4 pb-4
+          ${isGrid ? 'pt-1' : 'pt-2'}
+        `}
+      >
+        <span className="
+          text-sm md:text-base
+          font-medium
+          text-gray-800
         ">
-          <span className="text-white text-sm md:text-base font-semibold">
-            {title}
-          </span>
-        </div>
-      )}
-
-      {/* ✨ hover overlay только для featured */}
-      {!isGrid && (
-        <div className="
-          absolute inset-0 
-          bg-black/10 
-          opacity-0 
-          group-hover:opacity-100 
-          transition
-        " />
-      )}
+          {title}
+        </span>
+      </div>
     </Link>
   )
 }
