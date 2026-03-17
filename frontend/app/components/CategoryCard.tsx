@@ -12,38 +12,41 @@ export default function CategoryCard({ title, image, href }: CategoryCardProps) 
     <Link
       href={href}
       className="
-      bg-white
-      rounded-xl
-      overflow-hidden
-      shadow-md
-      hover:shadow-xl
-      transition
-      flex
-      flex-col
-      group
+        group 
+        relative 
+        aspect-square 
+        bg-white 
+        rounded-2xl 
+        shadow-sm 
+        hover:shadow-lg 
+        active:scale-95 
+        transition-all 
+        duration-300 
+        overflow-hidden
       "
     >
-
-      {/* IMAGE */}
-
-      <div className="relative aspect-square bg-gray-50">
+      <div className="relative w-full h-full p-4 md:p-6 flex items-center justify-center">
         <Image
-          src={image || '/placeholder.jpg'}
+          src={image}
           alt={title}
           fill
-          className="object-contain p-6 group-hover:scale-105 transition"
+          className="object-contain"
           unoptimized
         />
       </div>
 
-      {/* TITLE */}
-
-      <div className="py-3 text-center">
-        <span className="font-semibold text-[#1a1f4b]">
+      <div className="
+        absolute inset-0 
+        bg-black/40 
+        opacity-0 
+        group-hover:opacity-100 
+        transition 
+        flex items-center justify-center
+      ">
+        <span className="text-white text-lg md:text-xl font-semibold text-center px-4">
           {title}
         </span>
       </div>
-
     </Link>
   )
 }
