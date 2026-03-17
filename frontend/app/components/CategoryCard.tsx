@@ -19,45 +19,56 @@ export default function CategoryCard({ title, image, href }: CategoryCardProps) 
         group 
         relative 
         w-full
-        h-[140px] sm:h-[180px] md:h-[220px] lg:h-[260px]
-        bg-white 
+        h-[180px] md:h-[240px]
+        bg-[#f8f9fb]
         rounded-2xl 
         shadow-sm 
-        hover:shadow-lg 
-        active:scale-95 
+        hover:shadow-xl 
         transition-all 
         duration-300 
         overflow-hidden
       "
     >
       {/* 📦 Картинка */}
-      <div className="relative w-full h-full flex items-center justify-center">
+      <div className="absolute inset-0 flex items-center justify-center">
         <Image
           src={fullImage}
           alt={title}
           fill
-          className="object-contain scale-110"
+          className="
+            object-contain 
+            scale-105 
+            group-hover:scale-110 
+            transition-transform 
+            duration-500
+          "
           unoptimized
         />
       </div>
 
-      {/* 🏷️ Название */}
+      {/* 🌫️ мягкий градиент (очень subtle) */}
       <div className="
-        absolute bottom-0 left-0 right-0
-        bg-gradient-to-t from-black/70 via-black/40 to-transparent
-        p-3 md:p-4
-      ">
-        <span className="text-white text-sm md:text-base font-semibold">
+        absolute inset-0 
+        bg-gradient-to-t from-black/40 via-black/10 to-transparent
+      " />
+
+      {/* 🏷️ Название */}
+      <div className="absolute bottom-0 left-0 right-0 p-4">
+        <span className="
+          text-white 
+          text-base md:text-lg 
+          font-semibold 
+          tracking-wide
+        ">
           {title}
         </span>
       </div>
 
-      {/* ✨ hover */}
+      {/* ✨ hover overlay */}
       <div className="
         absolute inset-0 
-        bg-black/10 
-        opacity-0 
-        group-hover:opacity-100 
+        bg-black/0 
+        group-hover:bg-black/10 
         transition
       " />
     </Link>
