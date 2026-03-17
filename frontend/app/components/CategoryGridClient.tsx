@@ -26,12 +26,9 @@ export default function CategoryGridClient({
         Популярные категории
       </h2>
 
-      {/* 📱 MOBILE SWIPER */}
+      {/* 📱 MOBILE */}
       <div className="block md:hidden">
-        <Swiper
-          spaceBetween={12}
-          slidesPerView={1.3}
-        >
+        <Swiper spaceBetween={12} slidesPerView={1.3}>
           {items.map((cat) => (
             <SwiperSlide key={cat.slug}>
               <AnimatedCard>
@@ -46,7 +43,7 @@ export default function CategoryGridClient({
         </Swiper>
       </div>
 
-      {/* 💻 DESKTOP GRID */}
+      {/* 💻 DESKTOP */}
       <div className="hidden md:grid grid-cols-3 lg:grid-cols-5 gap-6">
         {items.map((cat, i) => (
           <AnimatedCard key={cat.slug} delay={i * 0.1}>
