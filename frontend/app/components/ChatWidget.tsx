@@ -94,7 +94,7 @@ export default function ChatWidget() {
           {/* Шапка */}
           <div className="bg-[#1a1f4b] text-white px-4 py-3 flex items-center gap-3">
             <img
-                src="/helper.png"
+                src="/helper.avif"
                 alt="SPORTCORE"
                 className="w-9 h-9 rounded-full object-cover"
               />
