@@ -1,7 +1,7 @@
 // frontend/app/api/chat/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || ''
+const GROQ_API_KEY = process.env.GROQ_API_KEY || ''
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || process.env.STRAPI_URL || 'http://localhost:1337'
 
 async function fetchProducts() {
@@ -46,11 +46,10 @@ export async function POST(req: NextRequest) {
   try {
     const { messages } = await req.json()
 
-    if (!GEMINI_API_KEY) {
-      return NextResponse.json({ error: 'GEMINI_API_KEY не настроен' }, { status: 500 })
+    if (!GROQ_API_KEY) {
+      return NextResponse.json({ error: 'GROQ_API_KEY не настроен' }, { status: 500 })
     }
 
-    // Загружаем актуальные товары и категории
     const [products, categories] = await Promise.all([fetchProducts(), fetchCategories()])
 
     const productList = products
@@ -61,60 +60,56 @@ export async function POST(req: NextRequest) {
       .map((c: any) => `- ${c.name} | /category/${c.slug}`)
       .join('\n')
 
-    const systemPrompt = `Ты — дружелюбный ИИ-ассистент интернет-магазина спортивных товаров SPORTCORE (sportcore.kg).
-Ты помогаешь покупателям найти нужные товары, объясняешь как перемещаться по сайту, советуешь товары по бюджету.
+    const systemPrompt = `Ты — дружелюбный и живой ассистент интернет-магазина спортивных товаров SPORTCORE.
+Общайся как живой человек — тепло, просто и по делу. Никаких технических ссылок типа /search или /cart в ответах.
 
-Сайт имеет следующие страницы:
-- Главная: /
-- Каталог всех категорий: /category
-- Поиск: /search?query=...
-- Корзина: /cart
-- FAQ: /faq
+КАК УСТРОЕН САЙТ (объясняй это своими словами, не давай ссылки):
+- Вверху страницы есть строка поиска — можно вбить название товара и найти всё что есть
+- В шапке сайта есть кнопка "Корзина" — там хранятся выбранные товары
+- Раздел "Каталог" в меню — там все категории товаров
+- Раздел "FAQ" в меню — ответы на частые вопросы
+- Кнопка "Связаться с нами" ведёт в WhatsApp
 
 КАТЕГОРИИ НА САЙТЕ:
-${categoryList || 'Загрузка...'}
+${categoryList || 'Нет данных'}
 
-ТОВАРЫ НА САЙТЕ (название | цена | ссылка):
-${productList || 'Загрузка...'}
+ТОВАРЫ НА САЙТЕ (название | цена в сомах):
+${productList || 'Нет данных'}
 
 Правила:
 1. Отвечай ТОЛЬКО на русском языке
-2. Если пользователь ищет товар по бюджету — предложи подходящие из списка выше
-3. Если спрашивают о навигации — объясни как перейти на нужную страницу
-4. Будь кратким и полезным, не более 3-4 предложений
-5. Если товара нет в списке — скажи что можно поискать через поиск на сайте
-6. Не выдумывай товары которых нет в списке`
+2. Говори как живой консультант в магазине — тепло и по-человечески
+3. Никогда не пиши технические пути типа /search, /cart, /category — вместо этого описывай словами где это находится
+4. Если спрашивают про товар по бюджету — назови конкретные товары из списка с ценами
+5. Если товара нет — предложи поискать через строку поиска вверху сайта
+6. Не выдумывай товары которых нет в списке выше
+7. Отвечай кратко — 2-4 предложения максимум`
 
-    // Конвертируем историю сообщений в формат Gemini
-    const geminiMessages = messages.map((m: any) => ({
-      role: m.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: m.content }],
-    }))
-
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          system_instruction: { parts: [{ text: systemPrompt }] },
-          contents: geminiMessages,
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 512,
-          },
-        }),
-      }
-    )
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${GROQ_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          ...messages.map((m: any) => ({ role: m.role, content: m.content })),
+        ],
+        temperature: 0.7,
+        max_tokens: 512,
+      }),
+    })
 
     if (!response.ok) {
       const err = await response.text()
-      console.error('Gemini error:', err)
-      return NextResponse.json({ error: 'Ошибка Gemini API' }, { status: 500 })
+      console.error('Groq error:', err)
+      return NextResponse.json({ error: 'Ошибка Groq API' }, { status: 500 })
     }
 
     const data = await response.json()
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? 'Извините, не смог ответить.'
+    const text = data?.choices?.[0]?.message?.content ?? 'Извините, не смог ответить.'
 
     return NextResponse.json({ message: text })
   } catch (err) {
