@@ -3,6 +3,7 @@ import './globals.css'
 import Header from './components/Header'
 import Footer from './components/Footer'
 import { CartProvider } from './context/CartContext'
+import ChatWidget from './components/ChatWidget'
 
 import type { Metadata } from 'next'
 
@@ -24,6 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <CartProvider>
           <Header />
           {children}
+          <ChatWidget />
           <Footer />
         </CartProvider>
       </body>
