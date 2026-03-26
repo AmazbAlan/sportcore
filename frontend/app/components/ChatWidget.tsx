@@ -93,15 +93,13 @@ export default function ChatWidget() {
 
           {/* Шапка */}
           <div className="bg-[#1a1f4b] text-white px-4 py-3 flex items-center gap-3">
-            <div className="w-9 h-9 bg-blue-400 rounded-full flex items-center justify-center text-sm font-bold">
-              SC
-            </div>
+            <img
+                src="../../public/helper.png"
+                alt="SPORTCORE"
+                className="w-9 h-9 rounded-full object-cover"
+              />
             <div>
               <div className="font-semibold text-sm">SPORTCORE Ассистент</div>
-              <div className="text-xs text-blue-200 flex items-center gap-1">
-                <span className="w-2 h-2 bg-green-400 rounded-full inline-block"></span>
-                Онлайн
-              </div>
             </div>
           </div>
 
