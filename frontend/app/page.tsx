@@ -25,8 +25,8 @@ export default function HomePage() {
   return (
     <main>
       <HeroBanner />
-      <Advantages /> 
       <FeaturedProducts />
+      <Advantages /> 
       <CategoryGrid />
     </main>
   )
