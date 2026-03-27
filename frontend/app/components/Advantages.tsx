@@ -77,11 +77,10 @@ export default function Advantages() {
           whileInView={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
           viewport={{ once: true }}
-          className="w-48 h-48 md:w-64 md:h-64 bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center mx-auto text-gray-400 text-sm text-center px-4"
+          className="w-48 h-48 md:w-64 md:h-64 flex items-center justify-center mx-auto text-sm text-center px-4"
         >
           {/* Сюда поставь своё фото */}
-          <img src="/advantages.avif" alt="" className="w-full h-full object-cover rounded-full" />
-          Ваше фото здесь
+          <img src="/advantages.webp" alt="" className="w-full h-full object-cover rounded-full" />
         </motion.div>
 
         {/* Правые карточки */}
