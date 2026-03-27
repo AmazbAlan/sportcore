@@ -36,7 +36,7 @@ export default function Advantages() {
     <section className="max-w-7xl mx-auto px-4 py-14">
 
       {/* Заголовок */}
-      <div className="text-center mb-10">
+      <div className="text-center mb-12">
         <h2 className="text-2xl md:text-3xl font-bold text-[#1a1f4b]">
           Почему выбирают SPORTCORE
         </h2>
@@ -45,54 +45,69 @@ export default function Advantages() {
         </p>
       </div>
 
-      {/* Сетка */}
-      <div className="
-        grid gap-4
-        grid-cols-2
-        md:grid-cols-4
-      ">
-        {items.map((item, i) => {
-          const Icon = item.icon
+      {/* Макет: 2 карточки | фото | 2 карточки */}
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-6 items-center">
 
-          return (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: i * 0.05 }}
-              viewport={{ once: true }}
-              className="
-                group
-                p-4 md:p-6
-                rounded-2xl
-                bg-white
-                border border-gray-100
-                shadow-sm
-                hover:shadow-lg
-                hover:-translate-y-1
-                active:scale-[0.97]
-                transition-all
-              "
-            >
-              <Icon className="
-                w-6 h-6 mb-3
-                text-[#1a1f4b]
-                group-hover:scale-110
-                transition
-              " />
+        {/* Левые карточки */}
+        <div className="flex flex-col gap-6">
+          {items.slice(0, 2).map((item, i) => {
+            const Icon = item.icon
+            return (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: -30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.4, delay: i * 0.1 }}
+                viewport={{ once: true }}
+                className="group flex flex-col items-end text-right p-6 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all"
+              >
+                <div className="w-11 h-11 rounded-full bg-[#f0f2ff] flex items-center justify-center mb-3 group-hover:bg-[#1a1f4b] transition-colors">
+                  <Icon className="w-5 h-5 text-[#1a1f4b] group-hover:text-white transition-colors" />
+                </div>
+                <h4 className="text-base font-semibold text-[#1a1f4b]">{item.title}</h4>
+                <p className="text-sm text-gray-500 mt-1 max-w-[220px]">{item.desc}</p>
+              </motion.div>
+            )
+          })}
+        </div>
 
-              <h4 className="text-sm md:text-base font-semibold text-[#1a1f4b]">
-                {item.title}
-              </h4>
+        {/* Центр — место для фото */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          viewport={{ once: true }}
+          className="w-48 h-48 md:w-64 md:h-64 bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center mx-auto text-gray-400 text-sm text-center px-4"
+        >
+          {/* Сюда поставь своё фото */}
+          <img src="/advantages.avif" alt="" className="w-full h-full object-cover rounded-full" />
+          Ваше фото здесь
+        </motion.div>
 
-              <p className="text-xs md:text-sm text-gray-500 mt-1">
-                {item.desc}
-              </p>
-            </motion.div>
-          )
-        })}
+        {/* Правые карточки */}
+        <div className="flex flex-col gap-6">
+          {items.slice(2, 4).map((item, i) => {
+            const Icon = item.icon
+            return (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: 30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.4, delay: i * 0.1 }}
+                viewport={{ once: true }}
+                className="group flex flex-col items-start text-left p-6 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all"
+              >
+                <div className="w-11 h-11 rounded-full bg-[#f0f2ff] flex items-center justify-center mb-3 group-hover:bg-[#1a1f4b] transition-colors">
+                  <Icon className="w-5 h-5 text-[#1a1f4b] group-hover:text-white transition-colors" />
+                </div>
+                <h4 className="text-base font-semibold text-[#1a1f4b]">{item.title}</h4>
+                <p className="text-sm text-gray-500 mt-1 max-w-[220px]">{item.desc}</p>
+              </motion.div>
+            )
+          })}
+        </div>
+
       </div>
-
     </section>
   )
 }
