@@ -53,19 +53,19 @@ export async function POST(req: NextRequest) {
     const [products, categories] = await Promise.all([fetchProducts(), fetchCategories()])
 
     const productList = products
-      .map((p: any) => `- ${p.title} | ${p.price} сом | /product/${p.slug}`)
+      .map((p: any) => `- ${p.title} | ${p.price} сом | slug: ${p.slug}`)
       .join('\n')
 
     const categoryList = categories
-      .map((c: any) => `- ${c.name} | /category/${c.slug}`)
+      .map((c: any) => `- ${c.name} | slug: ${c.slug}`)
       .join('\n')
 
     const systemPrompt = `Ты — дружелюбный и живой ассистент интернет-магазина спортивных товаров SPORTCORE.
-Общайся как живой человек — тепло, просто и по делу. Никаких технических ссылок типа /search или /cart в ответах.
+Общайся как живой человек — тепло, просто и по делу.
 
-КАК УСТРОЕН САЙТ (объясняй это своими словами, не давай ссылки):
-- Вверху страницы есть строка поиска — можно вбить название товара и найти всё что есть
-- В шапке сайта есть кнопка "Корзина" — там хранятся выбранные товары
+КАК УСТРОЕН САЙТ:
+- Вверху страницы есть строка поиска — можно вбить название товара
+- В шапке сайта есть кнопка "Корзина"
 - Раздел "Каталог" в меню — там все категории товаров
 - Раздел "FAQ" в меню — ответы на частые вопросы
 - Кнопка "Связаться с нами" ведёт в WhatsApp
@@ -73,17 +73,44 @@ export async function POST(req: NextRequest) {
 КАТЕГОРИИ НА САЙТЕ:
 ${categoryList || 'Нет данных'}
 
-ТОВАРЫ НА САЙТЕ (название | цена в сомах):
+ТОВАРЫ НА САЙТЕ (название | цена | slug):
 ${productList || 'Нет данных'}
+
+ВАЖНО — формат ответа:
+Ты ВСЕГДА отвечаешь ТОЛЬКО валидным JSON объектом без лишнего текста, строго в таком формате:
+{
+  "message": "твой ответ пользователю",
+  "action": null
+}
+
+Если пользователь хочет перейти на конкретный товар или ты рекомендуешь конкретный товар — добавь action:
+{
+  "message": "твой ответ",
+  "action": {
+    "type": "navigate",
+    "url": "/product/SLUG_ТОВАРА",
+    "label": "Название товара"
+  }
+}
+
+Если пользователь хочет перейти в категорию:
+{
+  "message": "твой ответ",
+  "action": {
+    "type": "navigate",
+    "url": "/category/SLUG_КАТЕГОРИИ",
+    "label": "Название категории"
+  }
+}
 
 Правила:
 1. Отвечай ТОЛЬКО на русском языке
-2. Говори как живой консультант в магазине — тепло и по-человечески
-3. Никогда не пиши технические пути типа /search, /cart, /category — вместо этого описывай словами где это находится
-4. Если спрашивают про товар по бюджету — назови конкретные товары из списка с ценами
+2. Говори как живой консультант — тепло и по-человечески
+3. Никогда не пиши технические пути в поле message — только в action.url
+4. Если рекомендуешь товар — всегда добавляй action с navigate
 5. Если товара нет — предложи поискать через строку поиска вверху сайта
-6. Не выдумывай товары которых нет в списке выше
-7. Отвечай кратко — 2-4 предложения максимум`
+6. Не выдумывай товары которых нет в списке
+7. Отвечай кратко — 2-3 предложения в message`
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
@@ -109,9 +136,17 @@ ${productList || 'Нет данных'}
     }
 
     const data = await response.json()
-    const text = data?.choices?.[0]?.message?.content ?? 'Извините, не смог ответить.'
+    const raw = data?.choices?.[0]?.message?.content ?? '{}'
 
-    return NextResponse.json({ message: text })
+    try {
+      const parsed = JSON.parse(raw)
+      return NextResponse.json({
+        message: parsed.message ?? 'Извините, не смог ответить.',
+        action: parsed.action ?? null,
+      })
+    } catch {
+      return NextResponse.json({ message: raw, action: null })
+    }
   } catch (err) {
     console.error('Chat route error:', err)
     return NextResponse.json({ error: 'Внутренняя ошибка сервера' }, { status: 500 })
