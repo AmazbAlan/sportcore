@@ -51,7 +51,7 @@ export default function Advantages() {
       {/* Макет: левые | фото | правые */}
       <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-6 items-center">
 
-        {/* Левые — с разделителем */}
+        {/* Левые */}
         <div className="flex flex-col">
           {leftItems.map((item, i) => {
             const Icon = item.icon
@@ -62,18 +62,19 @@ export default function Advantages() {
                   whileInView={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.4, delay: i * 0.1 }}
                   viewport={{ once: true }}
-                  className="group flex flex-col items-end text-right px-4 py-8 hover:-translate-y-1 transition-all"
+                  className="group flex flex-row items-center justify-end gap-5 text-right px-4 py-8 hover:-translate-y-1 transition-all"
                 >
-                  <div className="w-20 h-20 rounded-full bg-[#f0f2ff] flex items-center justify-center mb-4 group-hover:bg-[#1a1f4b] transition-colors">
+                  <div>
+                    <h4 className="text-2xl font-bold text-[#1a1f4b]">{item.title}</h4>
+                    <p className="text-lg text-gray-500 mt-2 max-w-[280px] leading-relaxed">{item.desc}</p>
+                  </div>
+                  <div className="shrink-0 w-20 h-20 rounded-full bg-[#f0f2ff] flex items-center justify-center group-hover:bg-[#1a1f4b] transition-colors">
                     <Icon className="w-10 h-10 text-[#1a1f4b] group-hover:text-white transition-colors" />
                   </div>
-                  <h4 className="text-2xl font-bold text-[#1a1f4b]">{item.title}</h4>
-                  <p className="text-lg text-gray-500 mt-2 max-w-[280px] leading-relaxed">{item.desc}</p>
                 </motion.div>
 
-                {/* Разделитель только между двумя элементами */}
                 {i === 0 && (
-                  <div className="w-full h-[2px] bg-[#1a1f4b] opacity-20 rounded-full mx-auto" />
+                  <div className="w-full h-[2px] bg-[#1a1f4b] opacity-20 rounded-full" />
                 )}
               </div>
             )
@@ -91,7 +92,7 @@ export default function Advantages() {
           <img src="/advantages.webp" alt="" className="w-full h-full object-cover" />
         </motion.div>
 
-        {/* Правые — с разделителем */}
+        {/* Правые */}
         <div className="flex flex-col">
           {rightItems.map((item, i) => {
             const Icon = item.icon
@@ -102,18 +103,19 @@ export default function Advantages() {
                   whileInView={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.4, delay: i * 0.1 }}
                   viewport={{ once: true }}
-                  className="group flex flex-col items-start text-left px-4 py-8 hover:-translate-y-1 transition-all"
+                  className="group flex flex-row items-center justify-start gap-5 text-left px-4 py-8 hover:-translate-y-1 transition-all"
                 >
-                  <div className="w-20 h-20 rounded-full bg-[#f0f2ff] flex items-center justify-center mb-4 group-hover:bg-[#1a1f4b] transition-colors">
+                  <div className="shrink-0 w-20 h-20 rounded-full bg-[#f0f2ff] flex items-center justify-center group-hover:bg-[#1a1f4b] transition-colors">
                     <Icon className="w-10 h-10 text-[#1a1f4b] group-hover:text-white transition-colors" />
                   </div>
-                  <h4 className="text-2xl font-bold text-[#1a1f4b]">{item.title}</h4>
-                  <p className="text-lg text-gray-500 mt-2 max-w-[280px] leading-relaxed">{item.desc}</p>
+                  <div>
+                    <h4 className="text-2xl font-bold text-[#1a1f4b]">{item.title}</h4>
+                    <p className="text-lg text-gray-500 mt-2 max-w-[280px] leading-relaxed">{item.desc}</p>
+                  </div>
                 </motion.div>
 
-                {/* Разделитель только между двумя элементами */}
                 {i === 0 && (
-                  <div className="w-full h-[2px] bg-[#1a1f4b] opacity-20 rounded-full mx-auto" />
+                  <div className="w-full h-[2px] bg-[#1a1f4b] opacity-20 rounded-full" />
                 )}
               </div>
             )
