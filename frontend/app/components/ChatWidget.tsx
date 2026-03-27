@@ -45,9 +45,13 @@ export default function ChatWidget() {
   }, [open, messages])
 
   const handleNavigate = (url: string) => {
+  if (url.startsWith('http')) {
+    window.open(url, '_blank')
+  } else {
     router.push(url)
     setOpen(false)
   }
+}
 
   const sendMessage = async (text: string) => {
     const trimmed = text.trim()
