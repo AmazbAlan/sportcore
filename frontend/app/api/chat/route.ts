@@ -139,14 +139,16 @@ ${productList || 'Нет данных'}
     const raw = data?.choices?.[0]?.message?.content ?? '{}'
 
     try {
-      const parsed = JSON.parse(raw)
-      return NextResponse.json({
-        message: parsed.message ?? 'Извините, не смог ответить.',
-        action: parsed.action ?? null,
-      })
-    } catch {
-      return NextResponse.json({ message: raw, action: null })
-    }
+  // Вырезаем JSON из ответа даже если есть лишний текст
+  const jsonMatch = raw.match(/\{[\s\S]*\}/)
+  const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : null
+  return NextResponse.json({
+    message: parsed?.message ?? raw,
+    action: parsed?.action ?? null,
+  })
+} catch {
+  return NextResponse.json({ message: raw, action: null })
+}
   } catch (err) {
     console.error('Chat route error:', err)
     return NextResponse.json({ error: 'Внутренняя ошибка сервера' }, { status: 500 })
