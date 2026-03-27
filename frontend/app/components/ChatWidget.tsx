@@ -17,8 +17,7 @@ type Message = {
 }
 
 const QUICK_PROMPTS = [
-  'Как найти товар?',
-  'Есть товары до 2000 сом?',
+  'Есть товары до 3000 сом?',
   'Как оформить заказ?',
   'Какие категории есть?',
 ]
@@ -28,7 +27,7 @@ export default function ChatWidget() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: 'Привет! 👋 Я ассистент SPORTCORE. Помогу найти нужный товар или разобраться с сайтом. Чем могу помочь?',
+      content: 'Привет! Я ассистент SPORTCORE. Помогу найти нужный товар или разобраться с сайтом. Чем могу помочь?',
     },
   ])
   const [input, setInput] = useState('')
