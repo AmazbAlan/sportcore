@@ -108,16 +108,16 @@ export default function AboutUs() {
           </div>
 
           {/* Кнопки 1, 2, 3 */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-3 justify-items-center">
             {tabs.map((tab, i) => (
               <button
                 key={tab.id}
                 onClick={() => setActive(i)}
-                className={`relative flex items-center justify-center p-3 h-16 overflow-hidden transition-all duration-300
-                  ${active === i
-                    ? 'bg-[#1a1f4b] text-white'
-                    : 'bg-[#f0f2ff] text-[#1a1f4b] hover:bg-[#d0d5f0]'
-                  }`}
+                className={`relative flex items-center justify-center p-3 aspect-square w-full max-w-[140px] mx-auto overflow-hidden transition-all duration-300
+                ${active === i
+                  ? 'bg-[#1a1f4b] text-white'
+                  : 'bg-[#f0f2ff] text-[#1a1f4b] hover:bg-[#d0d5f0]'
+                }`}
               >
                 <span className="text-sm font-semibold z-10 text-center">
                   {tab.label}
