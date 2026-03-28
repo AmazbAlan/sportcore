@@ -113,19 +113,16 @@ export default function AboutUs() {
               <button
                 key={tab.id}
                 onClick={() => setActive(i)}
-                className={`relative flex flex-col justify-between p-4 aspect-square overflow-hidden transition-all duration-300
+                className={`relative flex items-center justify-center p-3 h-16 overflow-hidden transition-all duration-300
                   ${active === i
                     ? 'bg-[#1a1f4b] text-white'
                     : 'bg-[#f0f2ff] text-[#1a1f4b] hover:bg-[#d0d5f0]'
                   }`}
               >
-                {/* Текст сверху слева */}
-                <span className="text-sm font-semibold leading-tight z-10 text-left">
+                <span className="text-sm font-semibold z-10 text-center">
                   {tab.label}
                 </span>
-
-                {/* Большая цифра снизу справа */}
-                <span className={`absolute bottom-1 right-2 text-6xl font-bold leading-none select-none
+                <span className={`absolute bottom-0 right-2 text-4xl font-bold leading-none select-none
                   ${active === i ? 'text-white opacity-20' : 'text-[#1a1f4b] opacity-10'}`}>
                   {tab.id}
                 </span>
