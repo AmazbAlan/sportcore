@@ -4,10 +4,10 @@ import Link from 'next/link'
 const INSTAGRAM_URL = 'https://www.instagram.com/sportcore.kg'
 
 const instaPhotos = [
-  '/insta1.jpg',
-  '/insta2.jpg',
-  '/insta3.jpg',
-  '/insta4.jpg',
+  '/insta1.webp',
+  '/insta2.webp',
+  '/insta3.webp',
+  '/insta4.webp',
 ]
 
 export default function Footer() {
