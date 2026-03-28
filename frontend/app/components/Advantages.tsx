@@ -8,7 +8,7 @@ import {
   MessageCircle
 } from 'lucide-react'
 
-const leftItems = [
+const allItems = [
   {
     icon: Truck,
     title: 'Быстрая доставка',
@@ -19,9 +19,6 @@ const leftItems = [
     title: 'Гарантия качества',
     desc: 'Все товары проверены перед отправкой'
   },
-]
-
-const rightItems = [
   {
     icon: RefreshCcw,
     title: 'Возврат за 14 дней',
@@ -34,13 +31,16 @@ const rightItems = [
   }
 ]
 
+const leftItems = allItems.slice(0, 2)
+const rightItems = allItems.slice(2, 4)
+
 export default function Advantages() {
   return (
-    <section className="max-w-7xl mx-auto px-4 py-14">
+    <section className="max-w-7xl mx-auto px-4 py-10 md:py-14">
 
       {/* Заголовок */}
-      <div className="text-center mb-12">
-        <h2 className="text-2xl md:text-3xl font-bold text-[#1a1f4b]">
+      <div className="text-center mb-8 md:mb-12">
+        <h2 className="text-xl md:text-3xl font-bold text-[#1a1f4b]">
           Почему выбирают SPORTCORE
         </h2>
         <p className="text-gray-500 mt-2 text-sm md:text-base">
@@ -48,8 +48,31 @@ export default function Advantages() {
         </p>
       </div>
 
-      {/* Макет: левые | фото | правые */}
-      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-6 items-center">
+      {/* МОБИЛЬНАЯ версия — 2 колонки простые карточки */}
+      <div className="grid grid-cols-2 gap-3 md:hidden">
+        {allItems.map((item, i) => {
+          const Icon = item.icon
+          return (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: i * 0.07 }}
+              viewport={{ once: true }}
+              className="flex flex-col items-center text-center p-4 bg-white rounded-2xl border border-gray-100 shadow-sm"
+            >
+              <div className="w-12 h-12 rounded-full bg-[#f0f2ff] flex items-center justify-center mb-3">
+                <Icon className="w-6 h-6 text-[#1a1f4b]" />
+              </div>
+              <h4 className="text-sm font-bold text-[#1a1f4b] leading-tight">{item.title}</h4>
+              <p className="text-xs text-gray-500 mt-1 leading-relaxed">{item.desc}</p>
+            </motion.div>
+          )
+        })}
+      </div>
+
+      {/* ДЕСКТОП версия — оригинальный макет */}
+      <div className="hidden md:grid grid-cols-[1fr_auto_1fr] gap-6 items-center">
 
         {/* Левые */}
         <div className="flex flex-col">
@@ -72,22 +95,19 @@ export default function Advantages() {
                     <Icon className="w-10 h-10 text-[#1a1f4b] group-hover:text-white transition-colors" />
                   </div>
                 </motion.div>
-
-                {i === 0 && (
-                  <div className="w-full h-[2px] bg-[#1a1f4b] opacity-20 rounded-full" />
-                )}
+                {i === 0 && <div className="w-full h-[2px] bg-[#1a1f4b] opacity-20 rounded-full" />}
               </div>
             )
           })}
         </div>
 
-        {/* Центр — фото */}
+        {/* Центр - фото */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           whileInView={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
           viewport={{ once: true }}
-          className="w-56 h-56 md:w-72 md:h-72 mx-auto"
+          className="w-72 h-72 mx-auto"
         >
           <img src="/advantages.webp" alt="" className="w-full h-full object-cover" />
         </motion.div>
@@ -113,10 +133,7 @@ export default function Advantages() {
                     <p className="text-lg text-gray-500 mt-2 max-w-[280px] leading-relaxed">{item.desc}</p>
                   </div>
                 </motion.div>
-
-                {i === 0 && (
-                  <div className="w-full h-[2px] bg-[#1a1f4b] opacity-20 rounded-full" />
-                )}
+                {i === 0 && <div className="w-full h-[2px] bg-[#1a1f4b] opacity-20 rounded-full" />}
               </div>
             )
           })}
