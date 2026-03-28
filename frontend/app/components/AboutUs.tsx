@@ -46,14 +46,13 @@ export default function AboutUs() {
           whileInView={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
           viewport={{ once: true }}
-          className="w-full aspect-[4/3] overflow-hidden rounded-sm"
+          className="w-full aspect-[4/3] overflow-hidden"
         >
           <img
             src="/aboutus.webp"
             alt="О нас"
             className="w-full h-full object-cover"
             onError={(e) => {
-              // Попробуем другие расширения
               const t = e.currentTarget
               if (t.src.includes('.webp')) t.src = '/aboutus.jpg'
               else if (t.src.includes('.jpg')) t.src = '/aboutus.png'
@@ -69,57 +68,66 @@ export default function AboutUs() {
           viewport={{ once: true }}
           className="flex flex-col gap-6"
         >
-          {/* Декоративный угол + заголовок */}
-          <div className="relative pl-6 border-l-4 border-[#1a1f4b]">
+
+          {/* Блок с угловыми декорациями */}
+          <div className="relative p-6">
+
+            {/* Угол — левый верхний */}
+            <span className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-[#1a1f4b]" />
+            {/* Угол — правый нижний */}
+            <span className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-[#1a1f4b]" />
+
+            {/* Заголовок */}
             <AnimatePresence mode="wait">
               <motion.h3
                 key={active + '-title'}
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
+                exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.3 }}
-                className="text-xl md:text-2xl font-bold text-[#1a1f4b] leading-snug tracking-wide"
+                className="text-xl md:text-2xl font-bold text-[#1a1f4b] leading-snug tracking-wide mb-4"
               >
                 {tabs[active].title}
               </motion.h3>
             </AnimatePresence>
-          </div>
 
-          {/* Текст в рамке */}
-          <div className="border border-dashed border-[#1a1f4b] border-opacity-30 rounded-sm p-5">
+            {/* Текст */}
             <AnimatePresence mode="wait">
               <motion.p
                 key={active + '-text'}
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.3, delay: 0.05 }}
                 className="text-gray-600 text-base leading-relaxed"
               >
                 {tabs[active].text}
               </motion.p>
             </AnimatePresence>
+
           </div>
 
           {/* Кнопки 1, 2, 3 */}
-          <div className="grid grid-cols-3 gap-3 mt-2">
+          <div className="grid grid-cols-3 gap-3">
             {tabs.map((tab, i) => (
               <button
                 key={tab.id}
                 onClick={() => setActive(i)}
-                className={`relative flex flex-col items-start justify-end p-4 rounded-sm aspect-square transition-all duration-300 overflow-hidden
+                className={`relative flex flex-col justify-between p-4 aspect-square overflow-hidden transition-all duration-300
                   ${active === i
                     ? 'bg-[#1a1f4b] text-white'
-                    : 'bg-[#f0f2ff] text-[#1a1f4b] hover:bg-[#1a1f4b] hover:text-white'
+                    : 'bg-[#f0f2ff] text-[#1a1f4b] hover:bg-[#d0d5f0]'
                   }`}
               >
-                {/* Большая цифра */}
-                <span className={`absolute top-2 right-3 text-5xl font-bold leading-none select-none transition-colors duration-300
+                {/* Текст сверху слева */}
+                <span className="text-sm font-semibold leading-tight z-10 text-left">
+                  {tab.label}
+                </span>
+
+                {/* Большая цифра снизу справа */}
+                <span className={`absolute bottom-1 right-2 text-6xl font-bold leading-none select-none
                   ${active === i ? 'text-white opacity-20' : 'text-[#1a1f4b] opacity-10'}`}>
                   {tab.id}
-                </span>
-                <span className="relative z-10 text-sm font-semibold leading-tight">
-                  {tab.label}
                 </span>
               </button>
             ))}
