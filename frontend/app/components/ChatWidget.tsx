@@ -1,6 +1,5 @@
 'use client'
 
-// frontend/app/components/ChatWidget.tsx
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 

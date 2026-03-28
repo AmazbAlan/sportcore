@@ -2,7 +2,7 @@ import HeroBanner from './components/HeroBanner'
 import FeaturedProducts from './components/FeaturedProducts'
 import CategoryGrid from './components/CategoryGrid'
 import Advantages from './components/Advantages'
-
+import AboutUs from './components/AboutUs'
 
 
 export const metadata = {
@@ -27,6 +27,7 @@ export default function HomePage() {
       <HeroBanner />
       <FeaturedProducts />
       <Advantages /> 
+      <AboutUs />
       <CategoryGrid />
     </main>
   )
