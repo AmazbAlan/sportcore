@@ -1,6 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+const ALLOWED_ORIGINS = [
+  'https://sportcore-crm.vercel.app',
+  'http://localhost:3000',
+  'file://',
+]
+
+function corsHeaders(origin: string | null) {
+  const allowed = origin && ALLOWED_ORIGINS.some(o => origin.startsWith(o))
+  return {
+    'Access-Control-Allow-Origin': allowed ? origin! : ALLOWED_ORIGINS[0],
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+  }
+}
+
+export async function OPTIONS(req: NextRequest) {
+  const origin = req.headers.get('origin')
+  return new NextResponse(null, { status: 204, headers: corsHeaders(origin) })
+}
+
 export async function POST(req: NextRequest) {
+  const origin = req.headers.get('origin')
   const { name, price } = await req.json()
 
   const prompt = `Ты помогаешь заполнить карточку товара для спортивного магазина SPORTCORE в Бишкеке (Кыргызстан). Цены в сомах.
@@ -27,12 +48,7 @@ export async function POST(req: NextRequest) {
   "featured": false
 }
 
-Правила slug:
-- Только латиница, цифры и дефисы
-- Транслитерация русских слов: к→k, р→r, о→o, с→s, и→i, т→t, н→n, е→e и т.д.
-- Добавь ключевые слова для SEO
-- Примеры: "Кроссовки Nike Air Max" → "krossovki-nike-air-max", "МФР ролл 33 см" → "mfr-roll-33-sm", "Эспандер бублик" → "ekspander-bublik"
-- Slug должен быть уникальным — добавь характеристику если название общее`
+Правила slug: только латиница, цифры и дефисы. Транслитерация русских слов. Примеры: "Кроссовки Nike" → "krossovki-nike", "МФР ролл 33 см" → "mfr-roll-33-sm".`
 
   const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
@@ -49,9 +65,7 @@ export async function POST(req: NextRequest) {
   })
 
   if (!response.ok) {
-    const err = await response.text()
-    console.error('Groq error:', err)
-    return NextResponse.json({ error: 'Groq error' }, { status: 500 })
+    return NextResponse.json({ error: 'Groq error' }, { status: 500, headers: corsHeaders(origin) })
   }
 
   const data = await response.json()
@@ -60,8 +74,8 @@ export async function POST(req: NextRequest) {
 
   try {
     const result = jsonMatch ? JSON.parse(jsonMatch[0]) : {}
-    return NextResponse.json(result)
+    return NextResponse.json(result, { headers: corsHeaders(origin) })
   } catch {
-    return NextResponse.json({ error: 'Parse error' }, { status: 500 })
+    return NextResponse.json({ error: 'Parse error' }, { status: 500, headers: corsHeaders(origin) })
   }
 }
