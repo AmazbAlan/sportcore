@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const STRAPI_URL = (process.env.STRAPI_URL || 'https://sportcore-production.up.railway.app')
-  .replace(/\/+$/, '')
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+
+const h = {
+  'Content-Type': 'application/json',
+  apikey: SUPABASE_KEY,
+  Authorization: 'Bearer ' + SUPABASE_KEY,
+  Prefer: 'return=representation',
+}
 
 type CartItem = {
-  productId?: number
   slug?: string
   qty: number
 }
@@ -22,56 +28,35 @@ export async function POST(req: NextRequest) {
       const qty = Number(item.qty ?? 0)
       const slug = (item.slug ?? '').trim()
 
-      if (!slug) {
-        console.error('Missing slug in cart item:', item)
-        return { ok: false, reason: 'MISSING_SLUG', item }
-      }
-      if (!Number.isFinite(qty) || qty <= 0) {
-        console.error('Invalid qty:', item)
-        return { ok: false, reason: 'INVALID_QTY', slug, qty }
-      }
+      if (!slug) return { ok: false, reason: 'MISSING_SLUG', item }
+      if (!Number.isFinite(qty) || qty <= 0) return { ok: false, reason: 'INVALID_QTY', slug }
 
-      // 1) Ищем товар по slug
-      const getUrl =
-        `${STRAPI_URL}/api/products` +
-        `?filters[slug][$eq]=${encodeURIComponent(slug)}` +
-        `&populate=*`
+      // 1) Найти товар по slug
+      const getRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/products?slug=eq.${encodeURIComponent(slug)}&select=id,qty`,
+        { headers: h }
+      )
+      if (!getRes.ok) return { ok: false, reason: `GET_${getRes.status}`, slug }
 
-      const getRes = await fetch(getUrl)
+      const products = await getRes.json()
+      const product = products[0]
+      if (!product) return { ok: false, reason: 'NOT_FOUND', slug }
 
-      if (!getRes.ok) {
-        const text = await getRes.text().catch(() => '')
-        console.error('STRAPI GET(by slug) failed', { slug, status: getRes.status, text })
-        return { ok: false, reason: `GET_${getRes.status}`, slug }
-      }
+      const newQty = Math.max(0, Number(product.qty) - qty)
 
-      const json: any = await getRes.json().catch(() => null)
-      const product = json?.data?.[0]
+      // 2) Обновить остаток
+      const patchRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/products?id=eq.${product.id}`,
+        {
+          method: 'PATCH',
+          headers: h,
+          body: JSON.stringify({ qty: newQty }),
+        }
+      )
 
-      if (!product?.id || !product?.attributes) {
-        console.error('Product not found by slug or invalid response', { slug, json })
-        return { ok: false, reason: 'NOT_FOUND', slug }
-      }
+      if (!patchRes.ok) return { ok: false, reason: `PATCH_${patchRes.status}`, slug }
 
-      const realId = Number(product.id)
-      const currentStock = Number(product.attributes.stock ?? 0)
-
-      // 2) Обновляем stock по реальному id
-      const putRes = await fetch(`${STRAPI_URL}/api/products/${realId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          data: { stock: Math.max(0, currentStock - qty) },
-        }),
-      })
-
-      if (!putRes.ok) {
-        const text = await putRes.text().catch(() => '')
-        console.error('STRAPI PUT failed', { slug, realId, status: putRes.status, text })
-        return { ok: false, reason: `PUT_${putRes.status}`, slug, realId }
-      }
-
-      return { ok: true, slug, realId, from: currentStock, to: Math.max(0, currentStock - qty) }
+      return { ok: true, slug, from: product.qty, to: newQty }
     })
   )
 

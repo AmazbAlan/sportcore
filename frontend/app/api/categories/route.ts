@@ -1,47 +1,25 @@
-// frontend/app/api/categories/route.ts
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server'
 
-const STRAPI_URL = process.env.STRAPI_URL || "http://localhost:1337";
-
-type StrapiCategoryEntry = {
-  attributes?: {
-    name?: string | null;
-    slug?: string | null;
-  };
-};
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 export async function GET() {
   try {
-    const res = await fetch(`${STRAPI_URL}/api/categories?populate=*`, {
-      cache: "no-store",
-    });
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/categories?order=name.asc&select=name,slug`, {
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: 'Bearer ' + SUPABASE_KEY,
+      },
+      cache: 'no-store',
+    })
 
     if (!res.ok) {
-      const msg = await res.text().catch(() => "");
-      return NextResponse.json(
-        { error: "Failed to fetch categories", status: res.status, message: msg },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to fetch categories' }, { status: 500 })
     }
 
-    const json = await res.json();
-
-    const data: StrapiCategoryEntry[] = Array.isArray(json?.data) ? json.data : [];
-
-    const cats = data
-      .map((entry) => {
-        const name = (entry.attributes?.name ?? "").trim();
-        const slug = (entry.attributes?.slug ?? "").trim();
-        if (!slug) return null; // slug обязателен
-        return { name, slug };
-      })
-      .filter((x): x is { name: string; slug: string } => Boolean(x));
-
-    return NextResponse.json(cats);
+    const data = await res.json()
+    return NextResponse.json(data)
   } catch (e: any) {
-    return NextResponse.json(
-      { error: "Failed to fetch categories", message: e?.message ?? String(e) },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: e?.message ?? String(e) }, { status: 500 })
   }
 }

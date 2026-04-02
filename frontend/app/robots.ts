@@ -1,11 +1,15 @@
-import { MetadataRoute } from "next";
+import { MetadataRoute } from 'next'
 
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: {
-      userAgent: "*",
-      allow: "/",
-    },
-    sitemap: "https://sportcore.kg/sitemap.xml",
-  };
+    rules: [
+      {
+        userAgent: '*',
+        allow: '/',
+        disallow: ['/api/', '/checkout'],
+      },
+    ],
+    sitemap: 'https://sportcore.kg/sitemap.xml',
+    host: 'https://sportcore.kg',
+  }
 }

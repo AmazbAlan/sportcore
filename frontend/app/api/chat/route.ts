@@ -1,26 +1,22 @@
-// frontend/app/api/chat/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY || ''
-const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || process.env.STRAPI_URL || 'http://localhost:1337'
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+
+const sbHeaders = {
+  apikey: SUPABASE_KEY,
+  Authorization: 'Bearer ' + SUPABASE_KEY,
+}
 
 async function fetchProducts() {
   try {
     const res = await fetch(
-      `${STRAPI_URL}/api/products?populate[0]=image&populate[1]=category&populate[2]=variants&pagination[pageSize]=100`,
-      { next: { revalidate: 300 } }
+      `${SUPABASE_URL}/rest/v1/products?select=name,price,slug,category_slug`,
+      { headers: sbHeaders, next: { revalidate: 300 } }
     )
     if (!res.ok) return []
-    const data = await res.json()
-    return (data?.data ?? []).map((entry: any) => {
-      const raw = entry?.attributes ?? entry ?? {}
-      return {
-        title: raw.title ?? '',
-        price: raw.price ?? 0,
-        slug: raw.slug ?? '',
-        category: raw.category?.data?.attributes?.slug ?? raw.category?.slug ?? '',
-      }
-    })
+    return await res.json()
   } catch {
     return []
   }
@@ -28,15 +24,12 @@ async function fetchProducts() {
 
 async function fetchCategories() {
   try {
-    const res = await fetch(`${STRAPI_URL}/api/categories?sort=name:asc`, {
-      next: { revalidate: 300 },
-    })
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/categories?select=name,slug&order=name.asc`,
+      { headers: sbHeaders, next: { revalidate: 300 } }
+    )
     if (!res.ok) return []
-    const data = await res.json()
-    return (data?.data ?? []).map((entry: any) => {
-      const raw = entry?.attributes ?? entry ?? {}
-      return { name: raw.name ?? '', slug: raw.slug ?? '' }
-    })
+    return await res.json()
   } catch {
     return []
   }
@@ -53,81 +46,67 @@ export async function POST(req: NextRequest) {
     const [products, categories] = await Promise.all([fetchProducts(), fetchCategories()])
 
     const productList = products
-      .map((p: any) => `- ${p.title} | ${p.price} сом | slug: ${p.slug}`)
+      .map((p: any) => `- ${p.name} | ${p.price} сом | slug: ${p.slug}`)
       .join('\n')
 
     const categoryList = categories
       .map((c: any) => `- ${c.name} | slug: ${c.slug}`)
       .join('\n')
 
-    const systemPrompt = `Ты - дружелюбный и живой ассистент интернет-магазина спортивных товаров SPORTCORE.
+    const systemPrompt = `Ты - дружелюбный ассистент интернет-магазина спортивных товаров SPORTCORE.
 Общайся как живой человек - тепло, просто и по делу.
 
-КАК УСТРОЕН САЙТ И НАВИГАЦИЯ:
-- Главная страница - там хиты товаров и баннеры
-- Каталог - все категории товаров, кнопка "Каталог" в меню вверху
-- Корзина - кнопка "Корзина" в шапке сайта справа
-- FAQ - ответы на частые вопросы, кнопка "FAQ" в меню
-- Связаться с нами - кнопка в меню, открывает WhatsApp (+996 774 23 12 02)
-- Instagram - ссылка в подвале сайта внизу страницы
-- Поиск товаров - строка поиска вверху страницы
+КАК УСТРОЕН САЙТ:
+- Главная страница - хиты товаров и баннеры
+- Каталог - все категории, кнопка "Каталог" в меню
+- Корзина - кнопка "Корзина" в шапке
+- FAQ - ответы на частые вопросы
+- Поиск - строка поиска вверху
+- WhatsApp: +996 774 23 12 02
+- Instagram: sportcore.kg
 
 НАВИГАЦИЯ ЧЕРЕЗ ACTION:
-Если пользователь хочет перейти на одну из этих страниц — используй navigate action:
+Если пользователь хочет перейти — используй navigate action:
 - Главная → url: "/"
-- Каталог / категории → url: "/category"
+- Каталог → url: "/category"
 - Корзина → url: "/cart"
 - FAQ → url: "/faq"
 - Поиск → url: "/search?query=ЗАПРОС"
-- Конкретный товар → url: "/product/SLUG"
-- Конкретная категория → url: "/category/SLUG"
+- Товар → url: "/product/SLUG"
+- Категория → url: "/category/SLUG"
 - WhatsApp → url: "https://api.whatsapp.com/send?phone=+996774231202&text=Здравствуйте%2C%20я%20пишу%20с%20сайта"
 - Instagram → url: "https://www.instagram.com/sportcore.kg"
 
-КАТЕГОРИИ НА САЙТЕ:
+КАТЕГОРИИ:
 ${categoryList || 'Нет данных'}
 
-ТОВАРЫ НА САЙТЕ (название | цена | slug):
+ТОВАРЫ (название | цена | slug):
 ${productList || 'Нет данных'}
 
-ВАЖНО — формат ответа:
-Ты ВСЕГДА отвечаешь ТОЛЬКО валидным JSON объектом без лишнего текста, строго в таком формате:
+АДРЕС: г. Бишкек, проспект Чынгыза Айтматова 299в, ТРЦ Ала-Арча 2 этаж
+
+ВАЖНО — формат ответа. Отвечай ТОЛЬКО валидным JSON:
 {
   "message": "твой ответ пользователю",
   "action": null
 }
 
-Если пользователь хочет перейти на конкретный товар или ты рекомендуешь конкретный товар — добавь action:
+Если рекомендуешь товар или категорию — добавь action:
 {
   "message": "твой ответ",
   "action": {
     "type": "navigate",
-    "url": "/product/SLUG_ТОВАРА",
-    "label": "Название товара"
+    "url": "/product/SLUG",
+    "label": "Название"
   }
 }
-
-Если пользователь хочет перейти в категорию:
-{
-  "message": "твой ответ",
-  "action": {
-    "type": "navigate",
-    "url": "/category/SLUG_КАТЕГОРИИ",
-    "label": "Название категории"
-  }
-}
-
-ГДЕ НАХОДИТСЯ МАГАЗИН:
-Мы находимся в г. Бишкек, проспект Чынгыза Айтматова 299в, ТРЦ Ала-Арча 2 этаж
 
 Правила:
-1. Отвечай на русском языке, если будут другие то можешь отвечать на понятом языке (Кыргызский, Английский), но русский - приоритетный язык для ответов
-2. Говори как живой консультант — тепло и по-человечески
-3. Никогда не пиши технические пути в поле message — только в action.url
-4. Если рекомендуешь товар — всегда добавляй action с navigate
-5. Если товара нет — предложи поискать через строку поиска вверху сайта
-6. Не выдумывай товары которых нет в списке
-7. Отвечай кратко — 2-3 предложения в message`
+1. Отвечай на русском (можно кыргызский, английский)
+2. Говори как живой консультант
+3. Никогда не пиши технические пути в message — только в action.url
+4. Если рекомендуешь товар — добавляй action
+5. Отвечай кратко — 2-3 предложения`
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
@@ -147,8 +126,6 @@ ${productList || 'Нет данных'}
     })
 
     if (!response.ok) {
-      const err = await response.text()
-      console.error('Groq error:', err)
       return NextResponse.json({ error: 'Ошибка Groq API' }, { status: 500 })
     }
 
@@ -156,16 +133,15 @@ ${productList || 'Нет данных'}
     const raw = data?.choices?.[0]?.message?.content ?? '{}'
 
     try {
-  // Вырезаем JSON из ответа даже если есть лишний текст
-  const jsonMatch = raw.match(/\{[\s\S]*\}/)
-  const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : null
-  return NextResponse.json({
-    message: parsed?.message ?? raw,
-    action: parsed?.action ?? null,
-  })
-} catch {
-  return NextResponse.json({ message: raw, action: null })
-}
+      const jsonMatch = raw.match(/\{[\s\S]*\}/)
+      const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : null
+      return NextResponse.json({
+        message: parsed?.message ?? raw,
+        action: parsed?.action ?? null,
+      })
+    } catch {
+      return NextResponse.json({ message: raw, action: null })
+    }
   } catch (err) {
     console.error('Chat route error:', err)
     return NextResponse.json({ error: 'Внутренняя ошибка сервера' }, { status: 500 })
