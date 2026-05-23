@@ -44,6 +44,46 @@ export default function CheckoutPage() {
     setIsSubmitting(true)
 
     try {
+      // 1) Сохраняем заказ в Supabase ПЕРВЫМ — если упало, не открываем WhatsApp
+      //    Это гарантирует, что в CRM «История» заказ ВСЕГДА попадёт и остатки спишутся.
+      let serverOk = false
+      let serverMsg = ''
+      try {
+        const res = await fetch('/api/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customer: { name: name.trim(), phone: phone.trim(), address: address.trim() },
+            items,
+            total: totalValue,
+          }),
+        })
+        const data = await res.json().catch(() => ({}))
+        if (res.ok && data?.ok) {
+          serverOk = true
+        } else if (res.status === 409 && Array.isArray(data?.results)) {
+          // Какие-то товары закончились — показать клиенту
+          const oos = data.results
+            .filter((r: any) => !r.ok && r.reason === 'OUT_OF_STOCK')
+            .map((r: any) => r.slug)
+            .join(', ')
+          serverMsg = oos
+            ? `К сожалению, закончился товар: ${oos}. Удалите его из корзины.`
+            : data?.message || 'Не удалось оформить заказ.'
+        } else {
+          serverMsg = data?.message || `Ошибка сервера (${res.status})`
+        }
+      } catch (e: any) {
+        serverMsg = 'Нет связи с сервером. Проверь интернет.'
+      }
+
+      if (!serverOk) {
+        setError(serverMsg)
+        setIsSubmitting(false)
+        return
+      }
+
+      // 2) Только после успешного сохранения открываем WhatsApp
       const lines = [
         `Заказ от: ${name.trim()}`,
         `Телефон: ${phone.trim()}`,
@@ -54,24 +94,9 @@ export default function CheckoutPage() {
         ``,
         `Итого: ${totalValue} сом`,
       ]
-
       const text = encodeURIComponent(lines.join('\n'))
 
-      // НЕ даём API сломать WhatsApp: если упадёт — всё равно откроем WA
-      try {
-        await fetch('/api/checkout', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            customer: { name: name.trim(), phone: phone.trim(), address: address.trim() },
-            items,
-            total: totalValue,
-          }),
-        })
-      } catch (_) {}
-
       clear()
-
       window.location.href = `https://wa.me/+996774231202/?text=${text}`
     } catch (e: any) {
       setError(e?.message || 'Не удалось оформить заказ. Попробуй ещё раз.')
@@ -194,7 +219,6 @@ export default function CheckoutPage() {
                     className="flex items-start justify-between gap-3 rounded-xl border border-slate-200 p-4"
                   >
                     <div className="min-w-0 flex-1">
-                      {/* В 2 строки, чтобы не ломало мобилку */}
                       <div className="text-slate-900 font-medium overflow-hidden text-ellipsis line-clamp-2">
                         {i.title}
                       </div>

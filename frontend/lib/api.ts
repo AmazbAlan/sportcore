@@ -10,7 +10,7 @@ const h = {
 async function sb<T>(path: string): Promise<T[]> {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     headers: h,
-    next: { revalidate: 3600 },
+    next: { revalidate: 60 }, // было 3600 — раз в час слишком долго для CRM-связки
   })
   if (!res.ok) throw new Error(`Supabase error: ${res.status}`)
   return res.json()
@@ -43,12 +43,14 @@ export type Product = {
   slug: string
   title: string
   price: number
+  qty?: number
   imageUrl: string
   categorySlug: string
   description: RichTextBlock[]
   variants: ProductVariant[]
   seo_title?: string
   seo_desc?: string
+  featured?: boolean
 }
 
 export type Category = {
@@ -66,17 +68,27 @@ export interface BannerCategory {
 // ---- HELPERS ----
 
 function toProduct(row: any): Product {
+  // CRM хранит "сток" в колонке qty. Делаем синтетический variant если variants пустой,
+  // чтобы CartControls / страница товара корректно показывали "в наличии / нет в наличии".
+  const qty = Number(row.qty ?? 0)
+  let variants: ProductVariant[] = row.variants ?? []
+  if (!variants || variants.length === 0) {
+    variants = [{ id: row.id, size: '', stock: qty }]
+  }
+
   return {
     id: row.id,
     slug: row.slug ?? String(row.id),
     title: row.name ?? '',
     price: Number(row.price ?? 0),
+    qty,
     imageUrl: row.image_url ?? (Array.isArray(row.images) && row.images[0]) ?? '/placeholder.jpg',
-    categorySlug: row.category_slug ?? '',
+    categorySlug: row.category_slug ?? row.category ?? '',
     description: row.description ?? [],
-    variants: row.variants ?? [],
+    variants,
     seo_title: row.seo_title ?? undefined,
     seo_desc: row.seo_desc ?? undefined,
+    featured: Boolean(row.featured),
   }
 }
 
@@ -88,12 +100,18 @@ function toCategory(row: any): Category {
   }
 }
 
+// Товар «доступен на сайте» только если у него есть slug.
+// Без slug — карточка ведёт на /product/undefined → 404, поэтому скрываем.
+function isPublishable(row: any): boolean {
+  return Boolean(row?.slug && String(row.slug).trim().length > 0)
+}
+
 // ---- PRODUCTS ----
 
 export async function getAllProducts(): Promise<Product[]> {
   try {
     const rows = await sb<any>('products?order=id.asc&select=*')
-    return rows.map(toProduct)
+    return rows.filter(isPublishable).map(toProduct)
   } catch (err) {
     console.error('getAllProducts error:', err)
     return []
@@ -106,11 +124,12 @@ export async function getProductsByCategory(
   search?: string
 ): Promise<Product[]> {
   try {
-    let query = `products?select=*&category_slug=eq.${encodeURIComponent(slug)}`
+    // Принимаем и category_slug, и legacy "category" — для совместимости с товарами без category_slug
+    let query = `products?select=*&or=(category_slug.eq.${encodeURIComponent(slug)},category.eq.${encodeURIComponent(slug)})`
     if (maxPrice) query += `&price=lte.${maxPrice}`
     if (search) query += `&name=ilike.*${encodeURIComponent(search)}*`
     const rows = await sb<any>(query)
-    return rows.map(toProduct)
+    return rows.filter(isPublishable).map(toProduct)
   } catch (err) {
     console.error('getProductsByCategory error:', err)
     return []
@@ -122,7 +141,7 @@ export async function searchProducts(query: string): Promise<Product[]> {
     const rows = await sb<any>(
       `products?select=*&name=ilike.*${encodeURIComponent(query)}*`
     )
-    return rows.map(toProduct)
+    return rows.filter(isPublishable).map(toProduct)
   } catch (err) {
     console.error('searchProducts error:', err)
     return []
@@ -143,7 +162,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
 export async function getFeaturedProducts(): Promise<Product[]> {
   try {
     const rows = await sb<any>('products?select=*&featured=eq.true')
-    return rows.map(toProduct)
+    return rows.filter(isPublishable).map(toProduct)
   } catch (err) {
     console.error('getFeaturedProducts error:', err)
     return []
