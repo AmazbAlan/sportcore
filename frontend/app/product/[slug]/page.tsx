@@ -1,4 +1,4 @@
-export const revalidate = 3600
+export const revalidate = 60
 
 import React from 'react'
 import type { Metadata } from 'next'
@@ -8,53 +8,69 @@ import ProductInfoCard from './ProductInfoCard'
 
 type Props = { params: { slug: string } }
 
-function extractText(desc: any[] = []): string {
-  return desc
-    .map((block: any) => (block?.children ?? []).map((c: any) => c?.text ?? '').join(' '))
-    .join(' ')
-    .replace(/\s+/g, ' ')
-    .trim()
+function extractText(desc: any): string {
+  if (!desc) return ''
+  if (typeof desc === 'string') return desc
+  if (!Array.isArray(desc)) return ''
+  try {
+    return desc
+      .map((block: any) => {
+        if (!block) return ''
+        if (typeof block === 'string') return block
+        const children = Array.isArray(block.children) ? block.children : []
+        return children.map((c: any) => (c && typeof c.text === 'string') ? c.text : '').join(' ')
+      })
+      .join(' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+  } catch {
+    return ''
+  }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const product = await getProductBySlug(params.slug)
+  try {
+    const product = await getProductBySlug(params.slug)
 
-  if (!product) {
-    return {
-      title: 'Товар не найден',
-      robots: { index: false, follow: false },
+    if (!product) {
+      return {
+        title: 'Товар не найден',
+        robots: { index: false, follow: false },
+      }
     }
-  }
 
-  const desc = extractText(Array.isArray(product.description) ? product.description : []).slice(0, 200)
-  const url = `https://sportcore.kg/product/${product.slug}`
+    const desc = extractText(product.description).slice(0, 200)
+    const url = `https://sportcore.kg/product/${product.slug}`
 
-  const seoTitle =
-    product.seo_title?.trim() ||
-    `${product.title} — купить в Бишкеке | SPORTCORE`
+    const seoTitle =
+      product.seo_title?.trim() ||
+      `${product.title} — купить в Бишкеке | SPORTCORE`
 
-  const seoDescription =
-    product.seo_desc?.trim() ||
-    desc ||
-    `Купить ${product.title} в Бишкеке по лучшей цене. ${Number(product.price).toLocaleString()} сом. Быстрая доставка по Кыргызстану. SPORTCORE.`
+    const seoDescription =
+      product.seo_desc?.trim() ||
+      desc ||
+      `Купить ${product.title} в Бишкеке по лучшей цене. ${Number(product.price).toLocaleString()} сом. Быстрая доставка по Кыргызстану. SPORTCORE.`
 
-  return {
-    title: seoTitle,
-    description: seoDescription,
-    alternates: { canonical: url },
-    openGraph: {
+    return {
       title: seoTitle,
       description: seoDescription,
-      url,
-      type: 'product',
-      images: product.imageUrl ? [{ url: product.imageUrl, alt: product.title }] : [],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: seoTitle,
-      description: seoDescription,
-      images: product.imageUrl ? [product.imageUrl] : [],
-    },
+      alternates: { canonical: url },
+      openGraph: {
+        title: seoTitle,
+        description: seoDescription,
+        url,
+        type: 'website',
+        images: product.imageUrl ? [{ url: product.imageUrl, alt: product.title }] : [],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: seoTitle,
+        description: seoDescription,
+        images: product.imageUrl ? [product.imageUrl] : [],
+      },
+    }
+  } catch (e) {
+    return { title: 'SPORTCORE' }
   }
 }
 
@@ -70,19 +86,21 @@ export default async function ProductPage({ params }: Props) {
     )
   }
 
-  const categories = await getAllCategories()
+  // Защитный блок — всё что ниже не должно падать никогда
+  const categories = await getAllCategories().catch(() => [])
   const category = categories.find((c) => c.slug === product.categorySlug)
-  const categoryName = category?.name || product.categorySlug
+  const categoryName = category?.name || product.categorySlug || 'Каталог'
 
-  const desc = extractText(Array.isArray(product.description) ? product.description : []).slice(0, 300)
-  const inStock = (product.variants ?? []).some((v) => Number(v.stock ?? 0) > 0)
+  const desc = extractText(product.description).slice(0, 300)
+  const variants = Array.isArray(product.variants) ? product.variants : []
+  const inStock = variants.some((v: any) => Number(v?.stock ?? 0) > 0) || Number((product as any).qty ?? 0) > 0
   const productUrl = `https://sportcore.kg/product/${product.slug}`
 
   const productSchema = {
     '@context': 'https://schema.org',
     '@type': 'Product',
-    name: product.title,
-    description: product.seo_desc?.trim() || desc || product.title,
+    name: product.title || 'Товар',
+    description: product.seo_desc?.trim() || desc || product.title || '',
     image: product.imageUrl ? [product.imageUrl] : [],
     sku: product.slug,
     url: productUrl,
@@ -91,7 +109,7 @@ export default async function ProductPage({ params }: Props) {
       '@type': 'Offer',
       url: productUrl,
       priceCurrency: 'KGS',
-      price: String(product.price),
+      price: String(product.price || 0),
       availability: inStock
         ? 'https://schema.org/InStock'
         : 'https://schema.org/OutOfStock',

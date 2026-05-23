@@ -1,23 +1,34 @@
 'use client'
 
 import React, { useMemo, useState } from 'react'
-import Image from 'next/image'
 import type { Product } from '../../../lib/api'
 
-function blocksToText(desc: any[] = []): string {
-  return desc
-    .map((block: any) => (block?.children ?? []).map((c: any) => c?.text ?? '').join(' '))
-    .join('\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim()
+function blocksToText(desc: any): string {
+  if (!desc) return ''
+  if (typeof desc === 'string') return desc
+  if (!Array.isArray(desc)) return ''
+  try {
+    return desc
+      .map((block: any) => {
+        if (!block) return ''
+        if (typeof block === 'string') return block
+        const children = Array.isArray(block.children) ? block.children : []
+        return children.map((c: any) => (c && typeof c.text === 'string') ? c.text : '').join(' ')
+      })
+      .join('\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim()
+  } catch {
+    return ''
+  }
 }
 
 export default function ProductInfoCard({ product }: { product: Product }) {
   const [expanded, setExpanded] = useState(false)
+  const [imgError, setImgError] = useState(false)
 
   const description = useMemo(() => {
-    const d = Array.isArray((product as any).description) ? (product as any).description : []
-    return blocksToText(d)
+    return blocksToText((product as any).description)
   }, [product])
 
   const preview = useMemo(() => {
@@ -25,23 +36,27 @@ export default function ProductInfoCard({ product }: { product: Product }) {
     return description.length > 320 ? description.slice(0, 320).trimEnd() + '…' : description
   }, [description, expanded])
 
-  const mainImageSrc =
-    (product as any).imageUrl && String((product as any).imageUrl).length > 5
-      ? (product as any).imageUrl
-      : '/placeholder.jpg'
+  const rawSrc = (product as any).imageUrl
+  const hasValidUrl =
+    rawSrc &&
+    typeof rawSrc === 'string' &&
+    rawSrc.length > 5 &&
+    (rawSrc.startsWith('http') || rawSrc.startsWith('/'))
+
+  const mainImageSrc = hasValidUrl && !imgError ? rawSrc : '/placeholder.jpg'
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-      {/* Фото */}
+      {/* Фото — обычный img, чтобы не падать на битых URL и доменах не в next.config */}
       <div className="bg-slate-50 p-6">
-        <div className="relative aspect-square w-full rounded-2xl bg-white border border-slate-200 overflow-hidden">
-          <Image
+        <div className="relative aspect-square w-full rounded-2xl bg-white border border-slate-200 overflow-hidden flex items-center justify-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
             src={mainImageSrc}
-            alt={product.title}
-            fill
-            sizes="(max-width: 768px) 100vw, 600px"
-            className="object-contain p-4"
-            priority
+            alt={product.title || 'Товар'}
+            className="w-full h-full object-contain p-4"
+            loading="eager"
+            onError={() => setImgError(true)}
           />
         </div>
       </div>
