@@ -67,12 +67,31 @@ export interface BannerCategory {
 
 // ---- HELPERS ----
 
+// Нормализуем description: может прийти null, строкой, или массивом блоков.
+// Сайту нужен массив [{ children: [{ text: '...' }] }] (legacy формат Strapi).
+function normalizeDescription(raw: any): RichTextBlock[] {
+  if (!raw) return []
+  if (Array.isArray(raw)) {
+    // Уже массив — но проверим что это массив объектов с children
+    return raw.filter((b: any) => b && typeof b === 'object' && Array.isArray(b.children))
+  }
+  if (typeof raw === 'string') {
+    // CRM иногда сохраняет строкой — оборачиваем в правильный формат
+    return [{ children: [{ text: raw }] }]
+  }
+  if (typeof raw === 'object' && Array.isArray(raw.children)) {
+    return [raw]
+  }
+  return []
+}
+
 function toProduct(row: any): Product {
   // CRM хранит "сток" в колонке qty. Делаем синтетический variant если variants пустой,
   // чтобы CartControls / страница товара корректно показывали "в наличии / нет в наличии".
   const qty = Number(row.qty ?? 0)
-  let variants: ProductVariant[] = row.variants ?? []
-  if (!variants || variants.length === 0) {
+  const rawVariants = Array.isArray(row.variants) ? row.variants : []
+  let variants: ProductVariant[] = rawVariants
+  if (variants.length === 0) {
     variants = [{ id: row.id, size: '', stock: qty }]
   }
 
@@ -84,7 +103,7 @@ function toProduct(row: any): Product {
     qty,
     imageUrl: row.image_url ?? (Array.isArray(row.images) && row.images[0]) ?? '/placeholder.jpg',
     categorySlug: row.category_slug ?? row.category ?? '',
-    description: row.description ?? [],
+    description: normalizeDescription(row.description),
     variants,
     seo_title: row.seo_title ?? undefined,
     seo_desc: row.seo_desc ?? undefined,
