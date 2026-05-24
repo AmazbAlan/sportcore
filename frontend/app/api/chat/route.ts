@@ -6,7 +6,7 @@ const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 // Gemini через OpenAI-совместимый endpoint (никакого SDK не нужно)
 const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions'
-const MODEL = 'gemini-2.0-flash'
+const MODEL = 'gemini-2.5-flash-lite'
 
 const sbHeaders = {
   apikey: SUPABASE_KEY,
@@ -173,8 +173,12 @@ ${productList || 'По запросу ничего не найдено'}
     if (!response.ok) {
       const err = await response.text().catch(() => '')
       console.error('Gemini error:', response.status, err)
+      // Возвращаем статус ошибки в сообщении для отладки (уберём после исправления)
+      const debugMsg = process.env.NODE_ENV === 'development'
+        ? `Gemini ${response.status}: ${err.slice(0, 200)}`
+        : 'Сейчас небольшие технические неполадки. Напиши нам напрямую!'
       return NextResponse.json({
-        message: 'Сейчас небольшие технические неполадки. Напиши нам напрямую!',
+        message: debugMsg,
         action: { type: 'navigate', url: 'https://api.whatsapp.com/send?phone=996774231202', label: 'Написать в WhatsApp' }
       })
     }
