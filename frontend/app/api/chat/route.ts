@@ -1,26 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const GROQ_API_KEY = process.env.GROQ_API_KEY || ''
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || ''
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+
+// Gemini через OpenAI-совместимый endpoint (никакого SDK не нужно)
+const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions'
+const MODEL = 'gemini-2.0-flash'
 
 const sbHeaders = {
   apikey: SUPABASE_KEY,
   Authorization: 'Bearer ' + SUPABASE_KEY,
 }
 
-// Только товары В НАЛИЧИИ (qty > 0), с описанием для умных ответов
 async function fetchProducts() {
   try {
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/products?select=name,price,slug,category_slug,description,seo_desc&qty=gt.0&order=name.asc`,
-      { headers: sbHeaders, next: { revalidate: 120 } } // 2 минуты — актуальный сток
+      { headers: sbHeaders, next: { revalidate: 120 } }
     )
     if (!res.ok) return []
-    return await res.json()
-  } catch {
-    return []
-  }
+    return res.json()
+  } catch { return [] }
 }
 
 async function fetchCategories() {
@@ -30,131 +31,157 @@ async function fetchCategories() {
       { headers: sbHeaders, next: { revalidate: 300 } }
     )
     if (!res.ok) return []
-    return await res.json()
-  } catch {
-    return []
-  }
+    return res.json()
+  } catch { return [] }
 }
 
-// Извлекаем текст из description (jsonb или строка)
 function extractDesc(raw: any): string {
   if (!raw) return ''
-  if (typeof raw === 'string') return raw.slice(0, 120)
+  if (typeof raw === 'string') return raw.slice(0, 100)
   if (Array.isArray(raw)) {
-    const text = raw
-      .map((b: any) => (b?.children || []).map((c: any) => c?.text || '').join(' '))
-      .join(' ')
-      .trim()
-    return text.slice(0, 120)
+    return raw.map((b: any) =>
+      (b?.children || []).map((c: any) => c?.text || '').join(' ')
+    ).join(' ').trim().slice(0, 100)
   }
   return ''
 }
 
-// Обрезаем историю: оставляем системный промпт + последние N сообщений
-// Это предотвращает превышение контекста Groq
-const MAX_HISTORY = 8 // последние 8 сообщений (4 пары вопрос-ответ)
+// Простой поиск по релевантности — находим товары, подходящие к запросу
+// Это главное улучшение: вместо 200 товаров в промпте — только 15-20 релевантных
+function findRelevantProducts(products: any[], query: string, max = 20): any[] {
+  if (!products.length || !query) return products.slice(0, max)
+
+  const words = query.toLowerCase()
+    .replace(/[^a-zа-яё0-9\s]/gi, ' ')
+    .split(/\s+/)
+    .filter(w => w.length > 2)
+
+  if (!words.length) return products.slice(0, max)
+
+  const scored = products.map(p => {
+    const haystack = [p.name, p.category_slug, extractDesc(p.description), extractDesc(p.seo_desc)]
+      .join(' ').toLowerCase()
+
+    let score = 0
+    for (const word of words) {
+      if (haystack.includes(word)) score += 2
+      // Частичное совпадение (первые 4 буквы) — для русской морфологии
+      if (word.length >= 4 && haystack.includes(word.slice(0, 4))) score += 1
+    }
+    return { p, score }
+  })
+
+  // Возвращаем топ-20 по релевантности, с порогом > 0
+  const relevant = scored
+    .filter(x => x.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, max)
+    .map(x => x.p)
+
+  // Если ничего не нашли — возвращаем первые N (общий список)
+  return relevant.length > 0 ? relevant : products.slice(0, max)
+}
+
+// Извлекаем текст последних сообщений пользователя для поиска
+function getUserContext(messages: any[]): string {
+  return messages
+    .filter(m => m.role === 'user')
+    .slice(-3) // последние 3 сообщения пользователя
+    .map(m => m.content)
+    .join(' ')
+}
+
+const MAX_HISTORY = 8
 
 export async function POST(req: NextRequest) {
   try {
     const { messages } = await req.json()
 
-    if (!GROQ_API_KEY) {
-      return NextResponse.json({ error: 'GROQ_API_KEY не настроен' }, { status: 500 })
+    if (!GEMINI_API_KEY) {
+      return NextResponse.json(
+        { message: 'API ключ не настроен. Добавь GEMINI_API_KEY в переменные окружения Vercel.', action: null },
+        { status: 200 }
+      )
     }
 
     const [products, categories] = await Promise.all([fetchProducts(), fetchCategories()])
 
-    // Список категорий
+    // Поиск только релевантных товаров под запрос пользователя
+    const userContext = getUserContext(messages)
+    const relevantProducts = findRelevantProducts(products, userContext)
+
     const categoryList = categories
       .map((c: any) => `- ${c.name} (slug: ${c.slug})`)
       .join('\n')
 
-    // Список товаров в наличии — с кратким описанием
-    // Ограничиваем до 150 товаров чтобы не перегружать контекст
-    const productList = products
-      .slice(0, 150)
+    const productList = relevantProducts
       .map((p: any) => {
         const desc = extractDesc(p.description) || extractDesc(p.seo_desc)
-        const descPart = desc ? ` | ${desc}` : ''
-        return `- ${p.name} | ${p.price} сом | slug: ${p.slug}${descPart}`
+        return `- ${p.name} | ${p.price} сом | slug: ${p.slug}${desc ? ' | ' + desc : ''}`
       })
       .join('\n')
 
-    const systemPrompt = `Ты — живой консультант интернет-магазина спортивных товаров SPORTCORE в Бишкеке.
+    const totalInStock = products.length
 
-ВАЖНО: рекомендуй ТОЛЬКО товары из списка ниже. Это реальные товары которые ЕСТЬ В НАЛИЧИИ прямо сейчас. Если товара нет в списке — честно скажи что такого нет, и предложи что-то похожее из списка.
+    const systemPrompt = `Ты — консультант интернет-магазина спортивных товаров SPORTCORE в Бишкеке.
+
+ВАЖНО: рекомендуй ТОЛЬКО товары из списка ниже — это реальные товары в наличии. Всего в магазине ${totalInStock} товаров. Если нужного нет в списке — честно скажи и предложи похожее.
 
 КАТЕГОРИИ:
-${categoryList || 'Нет данных'}
+${categoryList || '—'}
 
-ТОВАРЫ В НАЛИЧИИ (название | цена | slug | описание):
-${productList || 'Товаров нет'}
+ПОДХОДЯЩИЕ ТОВАРЫ (название | цена | slug | описание):
+${productList || 'По запросу ничего не найдено'}
 
-КОНТАКТЫ И НАВИГАЦИЯ:
+КОНТАКТЫ:
 - WhatsApp: +996 774 23 12 02
-- Instagram: sportcore.kg
+- Instagram: sportcore.kg  
 - Адрес: Бишкек, пр. Ч. Айтматова 299в, ТРЦ Ала-Арча, 2 этаж
-- Главная: /
-- Каталог: /category
-- Корзина: /cart
-- FAQ: /faq
+
+НАВИГАЦИЯ (использовать в action.url):
+- Каталог: /category, Корзина: /cart, FAQ: /faq
+- Товар: /product/SLUG, Категория: /category/SLUG
 - Поиск: /search?query=ЗАПРОС
+- WhatsApp: https://api.whatsapp.com/send?phone=996774231202
 
-Отвечай ТОЛЬКО валидным JSON (без markdown, без \`\`\`):
-Если не нужна навигация:
-{"message": "твой ответ", "action": null}
+Отвечай ТОЛЬКО валидным JSON без markdown:
+{"message": "ответ", "action": null}
+или с навигацией:
+{"message": "ответ", "action": {"type": "navigate", "url": "/product/slug", "label": "Название"}}
 
-Если рекомендуешь конкретный товар — добавляй action:
-{"message": "твой ответ", "action": {"type": "navigate", "url": "/product/SLUG", "label": "Название товара"}}
+Правила: отвечай по-русски, тепло и кратко (2-3 предложения). Рекомендуй только товары из списка. Пути не пиши в message.`
 
-Если рекомендуешь категорию:
-{"message": "твой ответ", "action": {"type": "navigate", "url": "/category/SLUG", "label": "Название категории"}}
-
-Правила:
-1. Отвечай на русском, тепло и по делу, 2-3 предложения максимум
-2. Рекомендуй ТОЛЬКО товары из списка выше
-3. Если несколько подходящих товаров — упомяни 2-3 в тексте, в action дай ссылку на самый подходящий
-4. Если товара нет — честно скажи и предложи похожее из наличия
-5. Никогда не пиши пути (/product/...) в message — только в action.url`
-
-    // Обрезаем историю чтобы не превысить контекст
     const trimmedHistory = messages.slice(-MAX_HISTORY)
 
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const response = await fetch(GEMINI_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${GROQ_API_KEY}`,
+        'Authorization': `Bearer ${GEMINI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: MODEL,
         messages: [
           { role: 'system', content: systemPrompt },
           ...trimmedHistory.map((m: any) => ({ role: m.role, content: m.content })),
         ],
-        temperature: 0.4, // чуть ниже = точнее, меньше галлюцинаций
-        max_tokens: 400,  // ответ ассистента короткий — не нужно больше
+        temperature: 0.4,
+        max_tokens: 400,
       }),
     })
 
     if (!response.ok) {
-      const errText = await response.text().catch(() => '')
-      console.error('Groq chat error:', response.status, errText)
-      return NextResponse.json(
-        { message: 'Извини, сейчас технические неполадки. Напиши нам в WhatsApp: +996 774 23 12 02', action: {
-          type: 'navigate',
-          url: 'https://api.whatsapp.com/send?phone=996774231202&text=Здравствуйте',
-          label: 'Написать в WhatsApp'
-        }},
-        { status: 200 } // возвращаем 200 чтобы чат показал красивое сообщение, не «Ошибка ответа»
-      )
+      const err = await response.text().catch(() => '')
+      console.error('Gemini error:', response.status, err)
+      return NextResponse.json({
+        message: 'Сейчас небольшие технические неполадки. Напиши нам напрямую!',
+        action: { type: 'navigate', url: 'https://api.whatsapp.com/send?phone=996774231202', label: 'Написать в WhatsApp' }
+      })
     }
 
     const data = await response.json()
     const raw: string = data?.choices?.[0]?.message?.content ?? '{}'
-
-    // Убираем возможные ``` обёртки
-    const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/,'').trim()
+    const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
 
     try {
       const jsonMatch = cleaned.match(/\{[\s\S]*\}/)
@@ -164,14 +191,14 @@ ${productList || 'Товаров нет'}
         action: parsed?.action ?? null,
       })
     } catch {
-      // JSON не распарсился — отдаём raw текст как обычный ответ
       return NextResponse.json({ message: cleaned || raw, action: null })
     }
+
   } catch (err) {
     console.error('Chat route error:', err)
-    return NextResponse.json(
-      { message: 'Извини, что-то пошло не так. Попробуй ещё раз или напиши в WhatsApp: +996 774 23 12 02', action: null },
-      { status: 200 }
-    )
+    return NextResponse.json({
+      message: 'Что-то пошло не так. Напиши нам в WhatsApp, ответим быстро!',
+      action: { type: 'navigate', url: 'https://api.whatsapp.com/send?phone=996774231202', label: 'Написать в WhatsApp' }
+    })
   }
 }

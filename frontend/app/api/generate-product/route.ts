@@ -115,14 +115,14 @@ ${categoriesBlock}${slugWarning}
 - seo_title: до 60 символов
 - seo_desc: до 155 символов`
 
-  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+  const response = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+      'Authorization': `Bearer ${process.env.GEMINI_API_KEY}`,
     },
     body: JSON.stringify({
-      model: 'llama-3.3-70b-versatile',
+      model: 'gemini-2.0-flash',
       messages: [
         {
           role: 'system',
