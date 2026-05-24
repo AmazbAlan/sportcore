@@ -4,52 +4,44 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY || ''
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-// Gemini через OpenAI-совместимый endpoint (никакого SDK не нужно)
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions'
+// Нативный Gemini API — надёжнее чем OpenAI-совместимый прокси
 const MODEL = 'gemini-2.5-flash-lite'
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`
 
 const sbHeaders = {
   apikey: SUPABASE_KEY,
   Authorization: 'Bearer ' + SUPABASE_KEY,
 }
 
-async function fetchProducts() {
+// Параллельная загрузка товаров и категорий с таймаутом
+async function fetchWithTimeout(url: string, timeout = 4000) {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeout)
   try {
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/products?select=name,price,slug,category_slug,description,seo_desc&qty=gt.0&order=name.asc`,
-      { headers: sbHeaders, next: { revalidate: 120 } }
-    )
+    const res = await fetch(url, { headers: sbHeaders, signal: controller.signal, cache: 'no-store' })
     if (!res.ok) return []
-    return res.json()
-  } catch { return [] }
-}
-
-async function fetchCategories() {
-  try {
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/categories?select=name,slug&order=name.asc`,
-      { headers: sbHeaders, next: { revalidate: 300 } }
-    )
-    if (!res.ok) return []
-    return res.json()
-  } catch { return [] }
+    return await res.json()
+  } catch {
+    return []
+  } finally {
+    clearTimeout(timer)
+  }
 }
 
 function extractDesc(raw: any): string {
   if (!raw) return ''
-  if (typeof raw === 'string') return raw.slice(0, 100)
+  if (typeof raw === 'string') return raw.slice(0, 120)
   if (Array.isArray(raw)) {
     return raw.map((b: any) =>
       (b?.children || []).map((c: any) => c?.text || '').join(' ')
-    ).join(' ').trim().slice(0, 100)
+    ).join(' ').trim().slice(0, 120)
   }
   return ''
 }
 
-// Простой поиск по релевантности — находим товары, подходящие к запросу
-// Это главное улучшение: вместо 200 товаров в промпте — только 15-20 релевантных
-function findRelevantProducts(products: any[], query: string, max = 20): any[] {
-  if (!products.length || !query) return products.slice(0, max)
+function findRelevantProducts(products: any[], query: string, max = 25): any[] {
+  if (!products.length) return []
+  if (!query.trim()) return products.slice(0, max)
 
   const words = query.toLowerCase()
     .replace(/[^a-zа-яё0-9\s]/gi, ' ')
@@ -59,150 +51,180 @@ function findRelevantProducts(products: any[], query: string, max = 20): any[] {
   if (!words.length) return products.slice(0, max)
 
   const scored = products.map(p => {
-    const haystack = [p.name, p.category_slug, extractDesc(p.description), extractDesc(p.seo_desc)]
-      .join(' ').toLowerCase()
+    const haystack = [
+      p.name,
+      p.category_slug,
+      extractDesc(p.description),
+      extractDesc(p.seo_desc)
+    ].join(' ').toLowerCase()
 
     let score = 0
     for (const word of words) {
-      if (haystack.includes(word)) score += 2
-      // Частичное совпадение (первые 4 буквы) — для русской морфологии
+      if (haystack.includes(word)) score += 3
       if (word.length >= 4 && haystack.includes(word.slice(0, 4))) score += 1
     }
     return { p, score }
   })
 
-  // Возвращаем топ-20 по релевантности, с порогом > 0
   const relevant = scored
     .filter(x => x.score > 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, max)
     .map(x => x.p)
 
-  // Если ничего не нашли — возвращаем первые N (общий список)
   return relevant.length > 0 ? relevant : products.slice(0, max)
 }
 
-// Извлекаем текст последних сообщений пользователя для поиска
 function getUserContext(messages: any[]): string {
   return messages
     .filter(m => m.role === 'user')
-    .slice(-3) // последние 3 сообщения пользователя
+    .slice(-4)
     .map(m => m.content)
     .join(' ')
 }
 
-const MAX_HISTORY = 8
+// Случайные заглушки — вместо одного скучного сообщения
+const fallbackMessages = [
+  { message: 'Что-то пошло не так с ответом 🙈 Попробуй переспросить или напиши нам в WhatsApp — ответим быстро!', label: 'Написать в WhatsApp' },
+  { message: 'Не смог обработать запрос, извини! Напиши нам напрямую и мы поможем подобрать товар.', label: 'Написать в WhatsApp' },
+  { message: 'Упс, что-то сломалось 😅 Лучше напиши нам в WhatsApp — там точно ответят!', label: 'Открыть WhatsApp' },
+]
+
+function randomFallback() {
+  const fb = fallbackMessages[Math.floor(Math.random() * fallbackMessages.length)]
+  return NextResponse.json({
+    message: fb.message,
+    action: { type: 'navigate', url: 'https://api.whatsapp.com/send?phone=996774231202&text=Здравствуйте', label: fb.label }
+  })
+}
+
+const MAX_HISTORY = 6
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages } = await req.json()
+    const body = await req.json().catch(() => ({}))
+    const messages: any[] = Array.isArray(body.messages) ? body.messages : []
 
     if (!GEMINI_API_KEY) {
-      return NextResponse.json(
-        { message: 'API ключ не настроен. Добавь GEMINI_API_KEY в переменные окружения Vercel.', action: null },
-        { status: 200 }
-      )
+      console.error('GEMINI_API_KEY не задан')
+      return NextResponse.json({
+        message: 'Ассистент временно недоступен. Напиши нам в WhatsApp!',
+        action: { type: 'navigate', url: 'https://api.whatsapp.com/send?phone=996774231202', label: 'Написать в WhatsApp' }
+      })
     }
 
-    const [products, categories] = await Promise.all([fetchProducts(), fetchCategories()])
+    // Параллельная загрузка данных
+    const [products, categories] = await Promise.all([
+      fetchWithTimeout(`${SUPABASE_URL}/rest/v1/products?select=name,price,slug,category_slug,description,seo_desc&qty=gt.0&order=name.asc`),
+      fetchWithTimeout(`${SUPABASE_URL}/rest/v1/categories?select=name,slug&order=name.asc`),
+    ])
 
-    // Поиск только релевантных товаров под запрос пользователя
     const userContext = getUserContext(messages)
     const relevantProducts = findRelevantProducts(products, userContext)
+    const totalInStock = products.length
 
-    const categoryList = categories
-      .map((c: any) => `- ${c.name} (slug: ${c.slug})`)
+    const categoryList = (categories as any[])
+      .map((c: any) => `${c.name} → /category/${c.slug}`)
       .join('\n')
 
     const productList = relevantProducts
       .map((p: any) => {
         const desc = extractDesc(p.description) || extractDesc(p.seo_desc)
-        return `- ${p.name} | ${p.price} сом | slug: ${p.slug}${desc ? ' | ' + desc : ''}`
+        return `• ${p.name} — ${p.price} сом [/product/${p.slug}]${desc ? ` (${desc})` : ''}`
       })
       .join('\n')
 
-    const totalInStock = products.length
+    const systemPrompt = `Ты Макс — дружелюбный консультант спортивного магазина SPORTCORE в Бишкеке. Говоришь как живой человек: тепло, по делу, иногда с лёгким юмором. Не используешь канцелярит и сухие формулировки.
 
-    const systemPrompt = `Ты — консультант интернет-магазина спортивных товаров SPORTCORE в Бишкеке.
-
-ВАЖНО: рекомендуй ТОЛЬКО товары из списка ниже — это реальные товары в наличии. Всего в магазине ${totalInStock} товаров. Если нужного нет в списке — честно скажи и предложи похожее.
+ТОВАРЫ В НАЛИЧИИ (${totalInStock} позиций, показаны релевантные):
+${productList || 'Товары загружаются, попробуй ещё раз'}
 
 КАТЕГОРИИ:
 ${categoryList || '—'}
 
-ПОДХОДЯЩИЕ ТОВАРЫ (название | цена | slug | описание):
-${productList || 'По запросу ничего не найдено'}
-
 КОНТАКТЫ:
-- WhatsApp: +996 774 23 12 02
-- Instagram: sportcore.kg  
-- Адрес: Бишкек, пр. Ч. Айтматова 299в, ТРЦ Ала-Арча, 2 этаж
+• WhatsApp: https://api.whatsapp.com/send?phone=996774231202
+• Instagram: @sportcore.kg
+• Адрес: Бишкек, ТРЦ Ала-Арча, 2 этаж
 
-НАВИГАЦИЯ (использовать в action.url):
-- Каталог: /category, Корзина: /cart, FAQ: /faq
-- Товар: /product/SLUG, Категория: /category/SLUG
-- Поиск: /search?query=ЗАПРОС
-- WhatsApp: https://api.whatsapp.com/send?phone=996774231202
+ПРАВИЛА:
+1. Рекомендуй ТОЛЬКО товары из списка выше. Если нужного нет — честно скажи и предложи ближайшее
+2. Отвечай кратко — 2-3 предложения максимум
+3. Всегда отвечай на русском
 
-Отвечай ТОЛЬКО валидным JSON без markdown:
-{"message": "ответ", "action": null}
-или с навигацией:
-{"message": "ответ", "action": {"type": "navigate", "url": "/product/slug", "label": "Название"}}
+ФОРМАТ ОТВЕТА — строго JSON, без markdown, без \`\`\`:
+{"message": "текст ответа", "action": null}
 
-Правила: отвечай по-русски, тепло и кратко (2-3 предложения). Рекомендуй только товары из списка. Пути не пиши в message.`
+Если хочешь дать ссылку на товар или категорию:
+{"message": "текст", "action": {"type": "navigate", "url": "/product/slug-товара", "label": "Название кнопки"}}
 
-    const trimmedHistory = messages.slice(-MAX_HISTORY)
+Ссылки пиши ТОЛЬКО в action.url, не в message.`
 
-    const response = await fetch(GEMINI_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GEMINI_API_KEY}`,
+    // Формируем историю в формате Gemini
+    const history = messages.slice(-MAX_HISTORY).map((m: any) => ({
+      role: m.role === 'user' ? 'user' : 'model',
+      parts: [{ text: String(m.content || '') }],
+    }))
+
+    // Последнее сообщение должно быть от user
+    const lastUserMsg = [...history].reverse().find(m => m.role === 'user')
+    if (!lastUserMsg) return randomFallback()
+
+    // Убираем последний user из истории (он идёт отдельно как contents)
+    const historyWithoutLast = history.slice(0, -1)
+
+    const geminiBody = {
+      system_instruction: { parts: [{ text: systemPrompt }] },
+      contents: [
+        ...historyWithoutLast,
+        { role: 'user', parts: [{ text: lastUserMsg.parts[0].text }] },
+      ],
+      generationConfig: {
+        temperature: 0.5,
+        maxOutputTokens: 300,
+        responseMimeType: 'application/json', // просим JSON напрямую
       },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          ...trimmedHistory.map((m: any) => ({ role: m.role, content: m.content })),
-        ],
-        temperature: 0.4,
-        max_tokens: 400,
-      }),
+    }
+
+    const response = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(geminiBody),
     })
 
     if (!response.ok) {
-      const err = await response.text().catch(() => '')
-      console.error('Gemini error:', response.status, err)
-      // Возвращаем статус ошибки в сообщении для отладки (уберём после исправления)
-      const debugMsg = process.env.NODE_ENV === 'development'
-        ? `Gemini ${response.status}: ${err.slice(0, 200)}`
-        : 'Сейчас небольшие технические неполадки. Напиши нам напрямую!'
-      return NextResponse.json({
-        message: debugMsg,
-        action: { type: 'navigate', url: 'https://api.whatsapp.com/send?phone=996774231202', label: 'Написать в WhatsApp' }
-      })
+      const errText = await response.text().catch(() => '')
+      console.error(`Gemini API error ${response.status}:`, errText.slice(0, 500))
+      return randomFallback()
     }
 
     const data = await response.json()
-    const raw: string = data?.choices?.[0]?.message?.content ?? '{}'
-    const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
+    const raw: string = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
 
-    try {
-      const jsonMatch = cleaned.match(/\{[\s\S]*\}/)
-      const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : null
-      return NextResponse.json({
-        message: parsed?.message ?? cleaned,
-        action: parsed?.action ?? null,
-      })
-    } catch {
-      return NextResponse.json({ message: cleaned || raw, action: null })
+    if (!raw) {
+      console.error('Gemini пустой ответ:', JSON.stringify(data).slice(0, 300))
+      return randomFallback()
     }
 
-  } catch (err) {
-    console.error('Chat route error:', err)
-    return NextResponse.json({
-      message: 'Что-то пошло не так. Напиши нам в WhatsApp, ответим быстро!',
-      action: { type: 'navigate', url: 'https://api.whatsapp.com/send?phone=996774231202', label: 'Написать в WhatsApp' }
-    })
+    // Парсим JSON из ответа
+    try {
+      const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/,'').trim()
+      const jsonMatch = cleaned.match(/\{[\s\S]*\}/)
+      const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : null
+      if (!parsed?.message) {
+        return NextResponse.json({ message: cleaned, action: null })
+      }
+      return NextResponse.json({
+        message: parsed.message,
+        action: parsed.action ?? null,
+      })
+    } catch {
+      // Gemini вернул не JSON — показываем как текст
+      return NextResponse.json({ message: raw.slice(0, 400), action: null })
+    }
+
+  } catch (err: any) {
+    console.error('Chat route crash:', err?.message || err)
+    return randomFallback()
   }
 }
