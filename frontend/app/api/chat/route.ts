@@ -9,11 +9,12 @@ const sbHeaders = {
   Authorization: 'Bearer ' + SUPABASE_KEY,
 }
 
+// Только товары В НАЛИЧИИ (qty > 0), с описанием для умных ответов
 async function fetchProducts() {
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/products?select=name,price,slug,category_slug`,
-      { headers: sbHeaders, next: { revalidate: 300 } }
+      `${SUPABASE_URL}/rest/v1/products?select=name,price,slug,category_slug,description,seo_desc&qty=gt.0&order=name.asc`,
+      { headers: sbHeaders, next: { revalidate: 120 } } // 2 минуты — актуальный сток
     )
     if (!res.ok) return []
     return await res.json()
@@ -35,6 +36,24 @@ async function fetchCategories() {
   }
 }
 
+// Извлекаем текст из description (jsonb или строка)
+function extractDesc(raw: any): string {
+  if (!raw) return ''
+  if (typeof raw === 'string') return raw.slice(0, 120)
+  if (Array.isArray(raw)) {
+    const text = raw
+      .map((b: any) => (b?.children || []).map((c: any) => c?.text || '').join(' '))
+      .join(' ')
+      .trim()
+    return text.slice(0, 120)
+  }
+  return ''
+}
+
+// Обрезаем историю: оставляем системный промпт + последние N сообщений
+// Это предотвращает превышение контекста Groq
+const MAX_HISTORY = 8 // последние 8 сообщений (4 пары вопрос-ответ)
+
 export async function POST(req: NextRequest) {
   try {
     const { messages } = await req.json()
@@ -45,68 +64,61 @@ export async function POST(req: NextRequest) {
 
     const [products, categories] = await Promise.all([fetchProducts(), fetchCategories()])
 
-    const productList = products
-      .map((p: any) => `- ${p.name} | ${p.price} сом | slug: ${p.slug}`)
-      .join('\n')
-
+    // Список категорий
     const categoryList = categories
-      .map((c: any) => `- ${c.name} | slug: ${c.slug}`)
+      .map((c: any) => `- ${c.name} (slug: ${c.slug})`)
       .join('\n')
 
-    const systemPrompt = `Ты - дружелюбный ассистент интернет-магазина спортивных товаров SPORTCORE.
-Общайся как живой человек - тепло, просто и по делу.
+    // Список товаров в наличии — с кратким описанием
+    // Ограничиваем до 150 товаров чтобы не перегружать контекст
+    const productList = products
+      .slice(0, 150)
+      .map((p: any) => {
+        const desc = extractDesc(p.description) || extractDesc(p.seo_desc)
+        const descPart = desc ? ` | ${desc}` : ''
+        return `- ${p.name} | ${p.price} сом | slug: ${p.slug}${descPart}`
+      })
+      .join('\n')
 
-КАК УСТРОЕН САЙТ:
-- Главная страница - хиты товаров и баннеры
-- Каталог - все категории, кнопка "Каталог" в меню
-- Корзина - кнопка "Корзина" в шапке
-- FAQ - ответы на частые вопросы
-- Поиск - строка поиска вверху
-- WhatsApp: +996 774 23 12 02
-- Instagram: sportcore.kg
+    const systemPrompt = `Ты — живой консультант интернет-магазина спортивных товаров SPORTCORE в Бишкеке.
 
-НАВИГАЦИЯ ЧЕРЕЗ ACTION:
-Если пользователь хочет перейти — используй navigate action:
-- Главная → url: "/"
-- Каталог → url: "/category"
-- Корзина → url: "/cart"
-- FAQ → url: "/faq"
-- Поиск → url: "/search?query=ЗАПРОС"
-- Товар → url: "/product/SLUG"
-- Категория → url: "/category/SLUG"
-- WhatsApp → url: "https://api.whatsapp.com/send?phone=+996774231202&text=Здравствуйте%2C%20я%20пишу%20с%20сайта"
-- Instagram → url: "https://www.instagram.com/sportcore.kg"
+ВАЖНО: рекомендуй ТОЛЬКО товары из списка ниже. Это реальные товары которые ЕСТЬ В НАЛИЧИИ прямо сейчас. Если товара нет в списке — честно скажи что такого нет, и предложи что-то похожее из списка.
 
 КАТЕГОРИИ:
 ${categoryList || 'Нет данных'}
 
-ТОВАРЫ (название | цена | slug):
-${productList || 'Нет данных'}
+ТОВАРЫ В НАЛИЧИИ (название | цена | slug | описание):
+${productList || 'Товаров нет'}
 
-АДРЕС: г. Бишкек, проспект Чынгыза Айтматова 299в, ТРЦ Ала-Арча 2 этаж
+КОНТАКТЫ И НАВИГАЦИЯ:
+- WhatsApp: +996 774 23 12 02
+- Instagram: sportcore.kg
+- Адрес: Бишкек, пр. Ч. Айтматова 299в, ТРЦ Ала-Арча, 2 этаж
+- Главная: /
+- Каталог: /category
+- Корзина: /cart
+- FAQ: /faq
+- Поиск: /search?query=ЗАПРОС
 
-ВАЖНО — формат ответа. Отвечай ТОЛЬКО валидным JSON:
-{
-  "message": "твой ответ пользователю",
-  "action": null
-}
+Отвечай ТОЛЬКО валидным JSON (без markdown, без \`\`\`):
+Если не нужна навигация:
+{"message": "твой ответ", "action": null}
 
-Если рекомендуешь товар или категорию — добавь action:
-{
-  "message": "твой ответ",
-  "action": {
-    "type": "navigate",
-    "url": "/product/SLUG",
-    "label": "Название"
-  }
-}
+Если рекомендуешь конкретный товар — добавляй action:
+{"message": "твой ответ", "action": {"type": "navigate", "url": "/product/SLUG", "label": "Название товара"}}
+
+Если рекомендуешь категорию:
+{"message": "твой ответ", "action": {"type": "navigate", "url": "/category/SLUG", "label": "Название категории"}}
 
 Правила:
-1. Отвечай на русском (можно кыргызский, английский)
-2. Говори как живой консультант
-3. Никогда не пиши технические пути в message — только в action.url
-4. Если рекомендуешь товар — добавляй action
-5. Отвечай кратко — 2-3 предложения`
+1. Отвечай на русском, тепло и по делу, 2-3 предложения максимум
+2. Рекомендуй ТОЛЬКО товары из списка выше
+3. Если несколько подходящих товаров — упомяни 2-3 в тексте, в action дай ссылку на самый подходящий
+4. Если товара нет — честно скажи и предложи похожее из наличия
+5. Никогда не пиши пути (/product/...) в message — только в action.url`
+
+    // Обрезаем историю чтобы не превысить контекст
+    const trimmedHistory = messages.slice(-MAX_HISTORY)
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
@@ -118,32 +130,48 @@ ${productList || 'Нет данных'}
         model: 'llama-3.3-70b-versatile',
         messages: [
           { role: 'system', content: systemPrompt },
-          ...messages.map((m: any) => ({ role: m.role, content: m.content })),
+          ...trimmedHistory.map((m: any) => ({ role: m.role, content: m.content })),
         ],
-        temperature: 0.7,
-        max_tokens: 512,
+        temperature: 0.4, // чуть ниже = точнее, меньше галлюцинаций
+        max_tokens: 400,  // ответ ассистента короткий — не нужно больше
       }),
     })
 
     if (!response.ok) {
-      return NextResponse.json({ error: 'Ошибка Groq API' }, { status: 500 })
+      const errText = await response.text().catch(() => '')
+      console.error('Groq chat error:', response.status, errText)
+      return NextResponse.json(
+        { message: 'Извини, сейчас технические неполадки. Напиши нам в WhatsApp: +996 774 23 12 02', action: {
+          type: 'navigate',
+          url: 'https://api.whatsapp.com/send?phone=996774231202&text=Здравствуйте',
+          label: 'Написать в WhatsApp'
+        }},
+        { status: 200 } // возвращаем 200 чтобы чат показал красивое сообщение, не «Ошибка ответа»
+      )
     }
 
     const data = await response.json()
-    const raw = data?.choices?.[0]?.message?.content ?? '{}'
+    const raw: string = data?.choices?.[0]?.message?.content ?? '{}'
+
+    // Убираем возможные ``` обёртки
+    const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/,'').trim()
 
     try {
-      const jsonMatch = raw.match(/\{[\s\S]*\}/)
+      const jsonMatch = cleaned.match(/\{[\s\S]*\}/)
       const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : null
       return NextResponse.json({
-        message: parsed?.message ?? raw,
+        message: parsed?.message ?? cleaned,
         action: parsed?.action ?? null,
       })
     } catch {
-      return NextResponse.json({ message: raw, action: null })
+      // JSON не распарсился — отдаём raw текст как обычный ответ
+      return NextResponse.json({ message: cleaned || raw, action: null })
     }
   } catch (err) {
     console.error('Chat route error:', err)
-    return NextResponse.json({ error: 'Внутренняя ошибка сервера' }, { status: 500 })
+    return NextResponse.json(
+      { message: 'Извини, что-то пошло не так. Попробуй ещё раз или напиши в WhatsApp: +996 774 23 12 02', action: null },
+      { status: 200 }
+    )
   }
 }

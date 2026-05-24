@@ -21,14 +21,17 @@ const QUICK_PROMPTS = [
   'Какие категории есть?',
 ]
 
+// Максимум сообщений в истории на клиенте (для производительности)
+const MAX_CLIENT_MESSAGES = 30
+
+const INITIAL_MESSAGE: Message = {
+  role: 'assistant',
+  content: 'Привет! Я ассистент SPORTCORE. Помогу найти нужный товар или разобраться с сайтом. Чем могу помочь?',
+}
+
 export default function ChatWidget() {
   const [open, setOpen] = useState(false)
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: 'assistant',
-      content: 'Привет! Я ассистент SPORTCORE. Помогу найти нужный товар или разобраться с сайтом. Чем могу помочь?',
-    },
-  ])
+  const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -37,26 +40,31 @@ export default function ChatWidget() {
 
   useEffect(() => {
     if (open) {
-      bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-      setTimeout(() => inputRef.current?.focus(), 100)
+      setTimeout(() => {
+        bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+        inputRef.current?.focus()
+      }, 100)
     }
   }, [open, messages])
 
   const handleNavigate = (url: string) => {
-  if (url.startsWith('http')) {
-    window.open(url, '_blank')
-  } else {
-    router.push(url)
-    setOpen(false)
+    if (url.startsWith('http')) {
+      window.open(url, '_blank')
+    } else {
+      router.push(url)
+      setOpen(false)
+    }
   }
-}
 
   const sendMessage = async (text: string) => {
     const trimmed = text.trim()
     if (!trimmed || loading) return
 
     const userMsg: Message = { role: 'user', content: trimmed }
-    const newMessages = [...messages, userMsg]
+
+    // Обрезаем историю на клиенте чтобы не держать бесконечный массив в памяти
+    const prevMessages = messages.slice(-MAX_CLIENT_MESSAGES)
+    const newMessages = [...prevMessages, userMsg]
     setMessages(newMessages)
     setInput('')
     setLoading(true)
@@ -66,20 +74,42 @@ export default function ChatWidget() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          // Отправляем только контент (без action) — action это клиентская вещь
           messages: newMessages.map(m => ({ role: m.role, content: m.content })),
         }),
       })
-      const data = await res.json()
-      setMessages([
-        ...newMessages,
-        {
+
+      if (!res.ok) {
+        // HTTP ошибка (5xx) — показываем полезное сообщение
+        setMessages(prev => [...prev, {
           role: 'assistant',
-          content: data.message ?? 'Ошибка ответа',
-          action: data.action ?? null,
-        },
-      ])
+          content: 'Извини, что-то пошло не так. Напиши нам напрямую — ответим быстро!',
+          action: {
+            type: 'navigate',
+            url: 'https://api.whatsapp.com/send?phone=996774231202&text=Здравствуйте',
+            label: 'Написать в WhatsApp',
+          },
+        }])
+        return
+      }
+
+      const data = await res.json()
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: data.message ?? 'Не смог обработать запрос, попробуй ещё раз.',
+        action: data.action ?? null,
+      }])
     } catch {
-      setMessages([...newMessages, { role: 'assistant', content: 'Ошибка соединения. Попробуйте ещё раз.' }])
+      // Нет сети
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: 'Нет соединения. Проверь интернет или напиши нам в WhatsApp.',
+        action: {
+          type: 'navigate',
+          url: 'https://api.whatsapp.com/send?phone=996774231202&text=Здравствуйте',
+          label: 'Написать в WhatsApp',
+        },
+      }])
     } finally {
       setLoading(false)
     }
@@ -90,6 +120,10 @@ export default function ChatWidget() {
       e.preventDefault()
       sendMessage(input)
     }
+  }
+
+  const clearChat = () => {
+    setMessages([INITIAL_MESSAGE])
   }
 
   return (
@@ -111,35 +145,35 @@ export default function ChatWidget() {
         )}
       </button>
 
-      {/* Виджет чата */}
+      {/* Виджет */}
       {open && (
         <div
           className="fixed bottom-24 right-6 z-50 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-gray-200"
-          style={{ height: '500px' }}
+          style={{ height: '520px' }}
         >
           {/* Шапка */}
           <div className="bg-[#1a1f4b] text-white px-4 py-3 flex items-center gap-3">
             <img
-              src="/logo.png"
+              src="/helper.avif"
               alt="SPORTCORE"
-              className="w-9 h-9 rounded-full object-cover"
-              onError={(e) => {
-                const t = e.currentTarget
-                t.style.display = 'none'
-                const fallback = t.nextElementSibling as HTMLElement
-                if (fallback) fallback.style.display = 'flex'
-              }}
+              className="w-9 h-9 rounded-full object-cover flex-shrink-0"
+              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
             />
-            <div className="bg-[#1a1f4b] text-white px-4 py-3 flex items-center gap-3">
-            <img
-                src="/helper.avif"
-                alt="SPORTCORE"
-                className="w-9 h-9 rounded-full object-cover"
-              />
-            <div>
+            <div className="flex-1 min-w-0">
               <div className="font-semibold text-sm">SPORTCORE Ассистент</div>
+              <div className="text-xs text-blue-200 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 bg-green-400 rounded-full inline-block"></span>
+                В сети
+              </div>
             </div>
-          </div>
+            {/* Кнопка сброса диалога */}
+            <button
+              onClick={clearChat}
+              className="text-blue-300 hover:text-white transition-colors text-xs px-2 py-1 rounded hover:bg-white/10"
+              title="Начать новый диалог"
+            >
+              Сбросить
+            </button>
           </div>
 
           {/* Сообщения */}
@@ -147,7 +181,7 @@ export default function ChatWidget() {
             {messages.map((msg, i) => (
               <div key={i} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                 <div
-                  className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm leading-relaxed ${
+                  className={`max-w-[82%] px-3 py-2 rounded-2xl text-sm leading-relaxed ${
                     msg.role === 'user'
                       ? 'bg-[#1a1f4b] text-white rounded-br-sm'
                       : 'bg-white text-gray-800 shadow-sm border border-gray-100 rounded-bl-sm'
@@ -156,7 +190,6 @@ export default function ChatWidget() {
                   {msg.content}
                 </div>
 
-                {/* Кнопка перехода если есть action */}
                 {msg.action?.type === 'navigate' && (
                   <button
                     onClick={() => handleNavigate(msg.action!.url)}
@@ -165,20 +198,19 @@ export default function ChatWidget() {
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                     </svg>
-                    Перейти: {msg.action.label}
+                    {msg.action.label}
                   </button>
                 )}
               </div>
             ))}
 
-            {/* Индикатор загрузки */}
             {loading && (
               <div className="flex justify-start">
                 <div className="bg-white px-4 py-3 rounded-2xl rounded-bl-sm shadow-sm border border-gray-100">
                   <div className="flex gap-1 items-center">
-                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                   </div>
                 </div>
               </div>
@@ -186,7 +218,7 @@ export default function ChatWidget() {
             <div ref={bottomRef} />
           </div>
 
-          {/* Быстрые подсказки */}
+          {/* Быстрые подсказки — только в начале диалога */}
           {messages.length === 1 && (
             <div className="px-3 py-2 bg-gray-50 border-t border-gray-100 flex flex-wrap gap-1">
               {QUICK_PROMPTS.map((prompt) => (
@@ -201,7 +233,7 @@ export default function ChatWidget() {
             </div>
           )}
 
-          {/* Поле ввода */}
+          {/* Ввод */}
           <div className="px-3 py-3 bg-white border-t border-gray-200 flex gap-2 items-center">
             <input
               ref={inputRef}
@@ -211,12 +243,13 @@ export default function ChatWidget() {
               onKeyDown={handleKeyDown}
               placeholder="Написать сообщение..."
               disabled={loading}
+              maxLength={500}
               className="flex-1 bg-gray-100 rounded-full px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-[#1a1f4b] disabled:opacity-50"
             />
             <button
               onClick={() => sendMessage(input)}
               disabled={!input.trim() || loading}
-              className="w-9 h-9 bg-[#1a1f4b] text-white rounded-full flex items-center justify-center hover:bg-[#2a2f6b] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="w-9 h-9 bg-[#1a1f4b] text-white rounded-full flex items-center justify-center hover:bg-[#2a2f6b] disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex-shrink-0"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
