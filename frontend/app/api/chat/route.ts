@@ -5,7 +5,7 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 // Нативный Gemini API — надёжнее чем OpenAI-совместимый прокси
-const MODEL = 'gemini-2.5-flash-lite'
+const MODEL = 'gemini-2.5-flash'
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`
 
 const sbHeaders = {
@@ -152,13 +152,13 @@ ${categoryList || '—'}
 2. Отвечай кратко — 2-3 предложения максимум
 3. Всегда отвечай на русском
 
-ФОРМАТ ОТВЕТА — строго JSON, без markdown, без \`\`\`:
+ФОРМАТ ОТВЕТА — СТРОГО один JSON объект, без markdown, без \`\`\`, без пояснений до или после:
 {"message": "текст ответа", "action": null}
 
-Если хочешь дать ссылку на товар или категорию:
-{"message": "текст", "action": {"type": "navigate", "url": "/product/slug-товара", "label": "Название кнопки"}}
+Если нужна ссылка на товар или категорию — action заполни так:
+{"message": "текст", "action": {"type": "navigate", "url": "/product/slug", "label": "Название кнопки"}}
 
-Ссылки пиши ТОЛЬКО в action.url, не в message.`
+ВАЖНО: твой ответ должен начинаться с { и заканчиваться }. Никакого текста до или после JSON.`
 
     // Формируем историю в формате Gemini
     const history = messages.slice(-MAX_HISTORY).map((m: any) => ({
@@ -182,7 +182,7 @@ ${categoryList || '—'}
       generationConfig: {
         temperature: 0.5,
         maxOutputTokens: 300,
-        responseMimeType: 'application/json', // просим JSON напрямую
+        // responseMimeType убран — вызывал двойной JSON в ответе
       },
     }
 
@@ -208,18 +208,41 @@ ${categoryList || '—'}
 
     // Парсим JSON из ответа
     try {
-      const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/,'').trim()
+      const cleaned = raw
+        .replace(/^```(?:json)?\s*/i, '')
+        .replace(/\s*```$/, '')
+        .trim()
+
+      // Ищем первый валидный JSON объект в ответе
       const jsonMatch = cleaned.match(/\{[\s\S]*\}/)
-      const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : null
-      if (!parsed?.message) {
-        return NextResponse.json({ message: cleaned, action: null })
+      if (!jsonMatch) {
+        // Нет JSON вообще — показываем raw текст
+        return NextResponse.json({ message: cleaned.slice(0, 400), action: null })
       }
+
+      // Gemini иногда возвращает два JSON подряд — берём только первый
+      let parsed: any = null
+      try {
+        parsed = JSON.parse(jsonMatch[0])
+      } catch {
+        // Попробуем починить: обрезать по последней закрывающей скобке первого объекта
+        let depth = 0, end = -1
+        for (let i = 0; i < jsonMatch[0].length; i++) {
+          if (jsonMatch[0][i] === '{') depth++
+          if (jsonMatch[0][i] === '}') { depth--; if (depth === 0) { end = i; break } }
+        }
+        if (end > 0) parsed = JSON.parse(jsonMatch[0].slice(0, end + 1))
+      }
+
+      if (!parsed || typeof parsed.message !== 'string') {
+        return NextResponse.json({ message: cleaned.slice(0, 400), action: null })
+      }
+
       return NextResponse.json({
         message: parsed.message,
         action: parsed.action ?? null,
       })
     } catch {
-      // Gemini вернул не JSON — показываем как текст
       return NextResponse.json({ message: raw.slice(0, 400), action: null })
     }
 
