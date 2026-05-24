@@ -6,27 +6,31 @@ export interface CartItem {
   /** unique key combining product + variant */
   id: string
   productId: number
-  variantId: number
+  variantId?: string | number | null // строковый id варианта в новой модели
   slug: string
   title: string
   price: number
   qty: number
+  variantLabel?: string // "Размер: 42, Цвет: Чёрный"
+  /** legacy поле, оставлено для обратной совместимости */
   color?: string
 }
 
 interface CartContextValue {
   items: CartItem[]
-  /** item = { productId, variantId, slug, title, price } */
   add: (item: Omit<CartItem, 'id' | 'qty'>, qty?: number) => void
-  /** update by composite id */
   update: (id: string, qty: number) => void
-  /** remove by composite id */
   remove: (id: string) => void
   total: () => number
   clear: () => void
 }
 
 const CartContext = createContext<CartContextValue | null>(null)
+
+function makeCartKey(item: Omit<CartItem, 'id' | 'qty'>): string {
+  // Уникальный ключ: productId + variantId (если есть)
+  return `${item.productId}-${item.variantId ?? ''}-${item.color ?? ''}`
+}
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
@@ -35,12 +39,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     newItem: Omit<CartItem, 'id' | 'qty'>,
     qty: number = 1
   ) => {
-    const id = `${newItem.productId}-${newItem.variantId}-${newItem.color ?? ''}`
+    const id = makeCartKey(newItem)
     setItems((cur) => {
       const idx = cur.findIndex((i) => i.id === id)
       if (idx >= 0) {
         const copy = [...cur]
-        copy[idx].qty += qty
+        copy[idx] = { ...copy[idx], qty: copy[idx].qty + qty }
         return copy
       }
       return [...cur, { ...newItem, qty, id }]

@@ -26,16 +26,26 @@ export type Media = {
   url: string
 }
 
-export type VariantColor = {
-  name: string
-  image?: Media[]
+// Новая модель вариантов: атрибуты + варианты
+export type VariantItem = {
+  id: string
+  values: Record<string, string> // например { "Размер": "42", "Цвет": "Чёрный" }
+  stock: number
+  image_url?: string | null
+  price?: number | null // если null — берётся цена товара
 }
 
+export type VariantsConfig = {
+  attributes: string[] // например ["Размер", "Цвет"]
+  items: VariantItem[]
+}
+
+// Legacy тип, оставляем для совместимости со старым CartControls
+// (будет удалён когда сайт полностью перейдёт на VariantsConfig)
 export type ProductVariant = {
-  id: number
+  id: number | string
   size: string
   stock: number
-  color?: VariantColor[]
 }
 
 export type Product = {
@@ -47,7 +57,8 @@ export type Product = {
   imageUrl: string
   categorySlug: string
   description: RichTextBlock[]
-  variants: ProductVariant[]
+  variants: ProductVariant[] // legacy — для обратной совместимости
+  variantsConfig: VariantsConfig | null // новая модель
   seo_title?: string
   seo_desc?: string
   featured?: boolean
@@ -85,14 +96,59 @@ function normalizeDescription(raw: any): RichTextBlock[] {
   return []
 }
 
+// Нормализуем variants из БД (jsonb). Поддерживаем:
+// 1. Новый формат: { attributes: [...], items: [...] }
+// 2. Старый Strapi формат: массив [{ id, size, stock, color }]
+// 3. null или мусор → пусто
+function normalizeVariants(raw: any): VariantsConfig | null {
+  if (!raw) return null
+  // Новый формат
+  if (typeof raw === 'object' && !Array.isArray(raw) && Array.isArray(raw.attributes) && Array.isArray(raw.items)) {
+    if (raw.attributes.length === 0 || raw.items.length === 0) return null
+    return {
+      attributes: raw.attributes.map(String),
+      items: raw.items.map((it: any, i: number) => ({
+        id: String(it?.id || `v${i + 1}`),
+        values: (it?.values && typeof it.values === 'object') ? it.values : {},
+        stock: Number(it?.stock ?? 0),
+        image_url: it?.image_url || null,
+        price: it?.price != null ? Number(it.price) : null,
+      })),
+    }
+  }
+  // Старый формат Strapi (массив)
+  if (Array.isArray(raw) && raw.length > 0) {
+    return {
+      attributes: ['Размер'],
+      items: raw.map((v: any, i: number) => ({
+        id: String(v?.id ?? `v${i + 1}`),
+        values: { 'Размер': String(v?.size ?? '') },
+        stock: Number(v?.stock ?? 0),
+        image_url: v?.color?.[0]?.image?.[0]?.url || null,
+        price: null,
+      })),
+    }
+  }
+  return null
+}
+
 function toProduct(row: any): Product {
   // CRM хранит "сток" в колонке qty. Делаем синтетический variant если variants пустой,
-  // чтобы CartControls / страница товара корректно показывали "в наличии / нет в наличии".
+  // чтобы CartControls (старый) корректно показывал "в наличии / нет в наличии".
   const qty = Number(row.qty ?? 0)
-  const rawVariants = Array.isArray(row.variants) ? row.variants : []
-  let variants: ProductVariant[] = rawVariants
-  if (variants.length === 0) {
-    variants = [{ id: row.id, size: '', stock: qty }]
+
+  const variantsConfig = normalizeVariants(row.variants)
+
+  // Legacy variants для обратной совместимости со старым CartControls (если ещё не обновлён)
+  let legacyVariants: ProductVariant[]
+  if (variantsConfig) {
+    legacyVariants = variantsConfig.items.map(it => ({
+      id: it.id,
+      size: variantsConfig.attributes.map(a => it.values[a]).filter(Boolean).join(' / '),
+      stock: it.stock,
+    }))
+  } else {
+    legacyVariants = [{ id: row.id, size: '', stock: qty }]
   }
 
   return {
@@ -104,7 +160,8 @@ function toProduct(row: any): Product {
     imageUrl: row.image_url ?? (Array.isArray(row.images) && row.images[0]) ?? '/placeholder.jpg',
     categorySlug: row.category_slug ?? row.category ?? '',
     description: normalizeDescription(row.description),
-    variants,
+    variants: legacyVariants,
+    variantsConfig,
     seo_title: row.seo_title ?? undefined,
     seo_desc: row.seo_desc ?? undefined,
     featured: Boolean(row.featured),

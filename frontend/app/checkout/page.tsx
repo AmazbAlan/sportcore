@@ -64,8 +64,12 @@ export default function CheckoutPage() {
         } else if (res.status === 409 && Array.isArray(data?.results)) {
           // Какие-то товары закончились — показать клиенту
           const oos = data.results
-            .filter((r: any) => !r.ok && r.reason === 'OUT_OF_STOCK')
-            .map((r: any) => r.slug)
+            .filter((r: any) => !r.ok && (r.reason === 'OUT_OF_STOCK' || r.reason === 'VARIANT_REQUIRED' || r.reason === 'VARIANT_NOT_FOUND'))
+            .map((r: any) => {
+              const name = r.name || r.slug || 'товар'
+              const variant = r.variantLabel ? ` (${r.variantLabel})` : ''
+              return name + variant
+            })
             .join(', ')
           serverMsg = oos
             ? `К сожалению, закончился товар: ${oos}. Удалите его из корзины.`
