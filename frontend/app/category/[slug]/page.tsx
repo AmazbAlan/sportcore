@@ -101,6 +101,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
                     title={p.title}
                     price={p.price}
                     image={p.imageUrl}
+                    featured={p.featured}
                   />
                 ))}
               </div>
