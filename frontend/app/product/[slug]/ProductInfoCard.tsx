@@ -43,7 +43,7 @@ export default function ProductInfoCard({ product }: { product: Product }) {
     rawSrc.length > 5 &&
     (rawSrc.startsWith('http') || rawSrc.startsWith('/'))
 
-  const mainImageSrc = hasValidUrl && !imgError ? rawSrc : '/placeholder.jpg'
+  const mainImageSrc = hasValidUrl && !imgError ? rawSrc : '/placeholder.png'
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">

@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 
-const PLACEHOLDER = '/placeholder.jpg'
+const PLACEHOLDER = '/placeholder.png'
 
 interface ProductCardProps {
   slug: string

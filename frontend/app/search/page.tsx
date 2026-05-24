@@ -86,7 +86,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             >
               <div className="relative h-48 w-full bg-gray-50">
                 <Image
-                  src={prod.imageUrl && prod.imageUrl.length > 5 ? prod.imageUrl : '/placeholder.jpg'}
+                  src={prod.imageUrl && prod.imageUrl.length > 5 ? prod.imageUrl : '/placeholder.png'}
                   alt={prod.title}
                   fill
                   className="object-cover"

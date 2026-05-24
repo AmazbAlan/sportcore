@@ -157,7 +157,7 @@ function toProduct(row: any): Product {
     title: row.name ?? '',
     price: Number(row.price ?? 0),
     qty,
-    imageUrl: row.image_url ?? (Array.isArray(row.images) && row.images[0]) ?? '/placeholder.jpg',
+    imageUrl: row.image_url ?? (Array.isArray(row.images) && row.images[0]) ?? '/placeholder.png',
     categorySlug: row.category_slug ?? row.category ?? '',
     description: normalizeDescription(row.description),
     variants: legacyVariants,
@@ -172,7 +172,7 @@ function toCategory(row: any): Category {
   return {
     name: row.name ?? '',
     slug: row.slug ?? '',
-    imageUrl: row.image_url ?? '/placeholder-category.jpg',
+    imageUrl: row.image_url ?? '/placeholder-category.png',
   }
 }
 
