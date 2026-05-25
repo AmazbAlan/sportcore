@@ -100,7 +100,7 @@ ${categoriesBlock}${slugWarning}
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
     generationConfig: {
       temperature: 0.2,
-      maxOutputTokens: 600,
+      maxOutputTokens: 1024, // увеличили — JSON товара не должен обрезаться
     },
   }
 
@@ -131,24 +131,41 @@ ${categoriesBlock}${slugWarning}
 
   try {
     const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
-    const jsonMatch = cleaned.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) throw new Error('no JSON in response')
 
-    // Берём первый валидный объект
+    // Пробуем распарсить как есть
     let parsed: any = null
     try {
-      parsed = JSON.parse(jsonMatch[0])
+      const jsonMatch = cleaned.match(/\{[\s\S]*\}/)
+      if (jsonMatch) parsed = JSON.parse(jsonMatch[0])
     } catch {
-      // JSON обрезан — ищем по закрывающей скобке
-      let depth = 0, end = -1
-      for (let i = 0; i < jsonMatch[0].length; i++) {
-        if (jsonMatch[0][i] === '{') depth++
-        if (jsonMatch[0][i] === '}') { depth--; if (depth === 0) { end = i; break } }
-      }
-      if (end > 0) parsed = JSON.parse(jsonMatch[0].slice(0, end + 1))
+      // JSON обрезан — закрываем открытые строки и скобки
+      let fixed = cleaned
+      // Если последний символ не } — JSON обрезан
+      // Убираем незакрытое поле в конце (обрезанное значение)
+      fixed = fixed.replace(/,?\s*"[^"]*"\s*:\s*"[^"]*$/, '') // обрезанная строка
+        .replace(/,?\s*"[^"]*"\s*:\s*$/, '')                   // поле без значения
+        .trim()
+      // Закрываем объект если надо
+      if (!fixed.endsWith('}')) fixed += '}'
+      try { parsed = JSON.parse(fixed) } catch {}
     }
 
-    if (!parsed) throw new Error('parse failed')
+    if (!parsed) {
+      // Последний вариант: вытащить поля regex
+      parsed = {}
+      const extract = (key: string) => {
+        const m = cleaned.match(new RegExp(`"${key}"\\s*:\\s*"([^"]*)"`) )
+        return m ? m[1] : null
+      }
+      parsed.slug = extract('slug')
+      parsed.category_slug = extract('category_slug')
+      parsed.description = extract('description')
+      parsed.seo_title = extract('seo_title')
+      parsed.seo_desc = extract('seo_desc')
+      // Убираем null поля
+      Object.keys(parsed).forEach(k => { if (!parsed[k]) delete parsed[k] })
+      if (!Object.keys(parsed).length) throw new Error('no JSON in response')
+    }
 
     // Валидация category_slug
     if (categories.length > 0 && parsed.category_slug) {
