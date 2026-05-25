@@ -4,7 +4,6 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY || ''
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-// Нативный Gemini API — надёжнее чем OpenAI-совместимый прокси
 const MODEL = 'gemini-2.5-flash'
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`
 
@@ -181,8 +180,7 @@ ${categoryList || '—'}
       ],
       generationConfig: {
         temperature: 0.5,
-        maxOutputTokens: 300,
-        // responseMimeType убран — вызывал двойной JSON в ответе
+        maxOutputTokens: 600,
       },
     }
 
@@ -206,44 +204,60 @@ ${categoryList || '—'}
       return randomFallback()
     }
 
-    // Парсим JSON из ответа
+    // Парсим JSON из ответа Gemini
     try {
       const cleaned = raw
         .replace(/^```(?:json)?\s*/i, '')
         .replace(/\s*```$/, '')
         .trim()
 
-      // Ищем первый валидный JSON объект в ответе
+      // Пробуем найти и распарсить первый JSON объект
       const jsonMatch = cleaned.match(/\{[\s\S]*\}/)
-      if (!jsonMatch) {
-        // Нет JSON вообще — показываем raw текст
-        return NextResponse.json({ message: cleaned.slice(0, 400), action: null })
-      }
 
-      // Gemini иногда возвращает два JSON подряд — берём только первый
       let parsed: any = null
-      try {
-        parsed = JSON.parse(jsonMatch[0])
-      } catch {
-        // Попробуем починить: обрезать по последней закрывающей скобке первого объекта
-        let depth = 0, end = -1
-        for (let i = 0; i < jsonMatch[0].length; i++) {
-          if (jsonMatch[0][i] === '{') depth++
-          if (jsonMatch[0][i] === '}') { depth--; if (depth === 0) { end = i; break } }
+
+      if (jsonMatch) {
+        try {
+          parsed = JSON.parse(jsonMatch[0])
+        } catch {
+          // JSON обрезан (maxOutputTokens) — пробуем восстановить первый объект
+          let depth = 0, end = -1
+          for (let i = 0; i < jsonMatch[0].length; i++) {
+            if (jsonMatch[0][i] === '{') depth++
+            if (jsonMatch[0][i] === '}') { depth--; if (depth === 0) { end = i; break } }
+          }
+          if (end > 0) {
+            try { parsed = JSON.parse(jsonMatch[0].slice(0, end + 1)) } catch {}
+          }
         }
-        if (end > 0) parsed = JSON.parse(jsonMatch[0].slice(0, end + 1))
       }
 
-      if (!parsed || typeof parsed.message !== 'string') {
-        return NextResponse.json({ message: cleaned.slice(0, 400), action: null })
+      if (parsed && typeof parsed.message === 'string') {
+        return NextResponse.json({
+          message: parsed.message,
+          action: parsed.action ?? null,
+        })
       }
+
+      const msgMatch = cleaned.match(/"message"\s*:\s*"((?:[^"\\]|\\.)*)/)
+      if (msgMatch && msgMatch[1] && msgMatch[1].length > 5) {
+        // Восстанавливаем экранирование
+        const msgText = msgMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"').replace(/\\\\/g, '\\')
+        return NextResponse.json({ message: msgText, action: null })
+      }
+
+      const plainText = cleaned
+        .replace(/^\{"message"\s*:\s*"/, '')
+        .replace(/",\s*"action"[\s\S]*$/, '')
+        .replace(/"\s*}$/, '')
+        .trim()
 
       return NextResponse.json({
-        message: parsed.message,
-        action: parsed.action ?? null,
+        message: plainText.length > 10 ? plainText : 'Попробуй переформулировать вопрос.',
+        action: null,
       })
     } catch {
-      return NextResponse.json({ message: raw.slice(0, 400), action: null })
+      return NextResponse.json({ message: 'Попробуй ещё раз.', action: null })
     }
 
   } catch (err: any) {
