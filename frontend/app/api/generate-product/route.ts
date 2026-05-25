@@ -122,7 +122,7 @@ ${categoriesBlock}${slugWarning}
       'Authorization': `Bearer ${process.env.GEMINI_API_KEY}`,
     },
     body: JSON.stringify({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-2.5-flash',
       messages: [
         {
           role: 'system',
