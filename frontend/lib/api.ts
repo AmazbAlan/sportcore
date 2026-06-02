@@ -200,10 +200,21 @@ export async function getProductsByCategory(
   search?: string
 ): Promise<Product[]> {
   try {
-    // Принимаем и category_slug, и legacy "category" — для совместимости с товарами без category_slug
-    let query = `products?select=*&or=(category_slug.eq.${encodeURIComponent(slug)},category.eq.${encodeURIComponent(slug)})`
+    // 1. Находим id категории по slug
+    const cats = await sb<any>(`categories?select=id&slug=eq.${encodeURIComponent(slug)}`)
+    if (!cats.length) return []
+    const categoryId = cats[0].id
+
+    // 2. Достаём product_id из таблицы связей product_categories
+    const links = await sb<any>(`product_categories?select=product_id&category_id=eq.${categoryId}`)
+    if (!links.length) return []
+    const productIds = links.map((l: any) => l.product_id)
+
+    // 3. Достаём товары по этим id
+    let query = `products?select=*&id=in.(${productIds.join(',')})`
     if (maxPrice) query += `&price=lte.${maxPrice}`
     if (search) query += `&name=ilike.*${encodeURIComponent(search)}*`
+
     const rows = await sb<any>(query)
     return rows.filter(isPublishable).map(toProduct)
   } catch (err) {
