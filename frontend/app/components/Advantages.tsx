@@ -40,11 +40,11 @@ export default function Advantages() {
 
       {/* Заголовок */}
       <div className="text-center mb-8 md:mb-12">
-        <h2 className="text-xl md:text-3xl font-bold text-[#1a1f4b]">
+        <h2 className="text-2xl md:text-3xl font-black text-[#1a1f4b] tracking-tight">
           Почему выбирают SPORTCORE
         </h2>
         <p className="text-gray-500 mt-2 text-sm md:text-base">
-          Надежность, скорость и удобство
+          Надёжность, скорость и настоящая забота о клиентах
         </p>
       </div>
 
@@ -109,7 +109,7 @@ export default function Advantages() {
           viewport={{ once: true }}
           className="w-72 h-72 mx-auto"
         >
-          <img src="/advantages.webp" alt="" className="w-full h-full object-cover" />
+          <img src="/advantages.webp" alt="Преимущества SPORTCORE — качество, быстрая доставка и поддержка клиентов" loading="lazy" className="w-full h-full object-cover" />
         </motion.div>
 
         {/* Правые */}

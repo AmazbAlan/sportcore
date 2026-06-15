@@ -158,7 +158,7 @@ export default function CartControls({ product }: CartControlsProps) {
                       disabled={disabled}
                       type="button"
                       className={[
-                        'rounded-xl border px-4 py-2 text-sm font-semibold transition',
+                        'rounded-xl border px-4 py-2.5 min-h-[44px] text-sm font-semibold transition',
                         'focus:outline-none focus:ring-4 focus:ring-yellow-200',
                         isActive
                           ? 'border-yellow-500 bg-yellow-50 text-slate-900'
@@ -183,7 +183,7 @@ export default function CartControls({ product }: CartControlsProps) {
             <button
               type="button"
               onClick={() => setQty(q => Math.max(1, q - 1))}
-              className="h-10 w-10 rounded-xl border border-slate-200 bg-white text-lg font-semibold hover:bg-slate-50"
+              className="h-11 w-11 rounded-xl border border-slate-200 bg-white text-lg font-semibold hover:bg-slate-50 active:scale-95 transition-transform"
               aria-label="Уменьшить"
             >−</button>
             <input
@@ -191,12 +191,12 @@ export default function CartControls({ product }: CartControlsProps) {
               min={1}
               value={qty}
               onChange={(e) => setQty(Math.max(1, parseInt(e.target.value, 10) || 1))}
-              className="h-10 w-16 rounded-xl border border-slate-200 bg-white text-center text-base font-semibold"
+              className="h-11 w-16 rounded-xl border border-slate-200 bg-white text-center text-base font-semibold"
             />
             <button
               type="button"
               onClick={() => setQty(q => q + 1)}
-              className="h-10 w-10 rounded-xl border border-slate-200 bg-white text-lg font-semibold hover:bg-slate-50"
+              className="h-11 w-11 rounded-xl border border-slate-200 bg-white text-lg font-semibold hover:bg-slate-50 active:scale-95 transition-transform"
               aria-label="Увеличить"
             >+</button>
           </div>

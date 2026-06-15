@@ -50,7 +50,8 @@ export default function AboutUs() {
         >
           <img
             src="/aboutus.webp"
-            alt="О нас"
+            alt="Команда SPORTCORE — спортивный магазин в Бишкеке, Кыргызстан"
+            loading="lazy"
             className="w-full h-full object-cover"
             onError={(e) => {
               const t = e.currentTarget

@@ -63,10 +63,10 @@ export default function CategoryCard({ title, image, href, variant = 'featured' 
       className="group relative block w-full aspect-square overflow-hidden rounded-2xl bg-gray-100 transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl active:scale-[0.97]"
     >
       {showImage ? (
-        /* eslint-disable-next-line @next/next/no-img-element */
         <img
           src={image!}
-          alt={title}
+          alt={`Категория ${title} — купить в SPORTCORE Бишкек`}
+          loading="lazy"
           className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-110"
           onError={() => setImgError(true)}
         />

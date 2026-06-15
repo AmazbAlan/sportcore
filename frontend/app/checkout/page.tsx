@@ -111,7 +111,7 @@ export default function CheckoutPage() {
   return (
     <main className="min-h-[calc(100vh-120px)] bg-slate-50">
       <div className="container mx-auto px-4 py-10">
-        <div className="mx-auto max-w-4xl grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+        <div className="mx-auto max-w-4xl grid gap-6 lg:grid-cols-[1.2fr_0.8fr] items-start">
           {/* Форма */}
           <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
             <div className="flex items-start justify-between gap-4">
@@ -180,7 +180,7 @@ export default function CheckoutPage() {
               <button
                 onClick={onSubmit}
                 disabled={!canSubmit}
-                className="mt-2 inline-flex items-center justify-center gap-3 rounded-xl px-6 py-3 font-semibold text-white
+                className="mt-2 inline-flex items-center justify-center gap-3 rounded-xl px-6 py-4 min-h-[52px] font-semibold text-white
                            bg-green-600 transition active:scale-[0.99]
                            hover:bg-green-700
                            disabled:bg-slate-300 disabled:text-slate-600 disabled:cursor-not-allowed"

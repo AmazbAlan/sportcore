@@ -12,6 +12,11 @@ export default function CategoryPageClient({ categories }: any) {
 
   return (
     <main className="max-w-7xl mx-auto px-4 py-12">
+      <nav aria-label="Хлебные крошки" className="text-sm text-gray-500 mb-4 flex gap-1 items-center">
+        <a href="/" className="hover:text-gray-700">Главная</a>
+        <span>/</span>
+        <span className="text-gray-800">Каталог</span>
+      </nav>
       <h1 className="text-3xl font-bold text-[#1a1f4b] mb-8">
         Каталог
       </h1>

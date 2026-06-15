@@ -31,27 +31,26 @@ export default function ProductCard({
     (image.startsWith('http') || image.startsWith('/'))
   )
 
-  const [imgSrc, setImgSrc] = useState(hasValidImage ? image! : PLACEHOLDER)
+  const [imgSrc, setImgSrc]   = useState(hasValidImage ? image! : PLACEHOLDER)
   const [imgError, setImgError] = useState(!hasValidImage)
 
   return (
     <Link
       href={linkHref}
-      className="group block bg-white rounded-lg shadow-sm transition-all hover:shadow-lg hover:-translate-y-1"
+      className="group block bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-[#1a1f4b]/15"
     >
-      {/* Image container */}
-      <div className="relative w-full h-44 sm:h-52 mb-4">
+      {/* Изображение */}
+      <div className="relative w-full h-44 sm:h-52 overflow-hidden">
 
-        {/* Бейдж Хит — только если featured === true */}
+        {/* Бейдж Хит */}
         {featured && (
-          <div className="absolute top-2 left-2 z-10 bg-yellow-400 text-[#1a1f4b] text-xs font-semibold px-3 py-1 rounded-md shadow">
-            Хит
+          <div className="absolute top-2.5 left-2.5 z-10 bg-yellow-400 text-[#1a1f4b] text-[11px] font-black px-2.5 py-1 rounded-lg shadow-sm tracking-wide">
+            ХИТ
           </div>
         )}
 
         {imgError ? (
-          /* Заглушка когда нет фото */
-          <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 rounded-lg">
+          <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="w-10 h-10 text-slate-300 mb-1"
@@ -69,11 +68,10 @@ export default function ProductCard({
             <span className="text-xs text-slate-400">Фото скоро</span>
           </div>
         ) : (
-          /* eslint-disable-next-line @next/next/no-img-element */
           <img
             src={imgSrc}
-            alt={title}
-            className="w-full h-full object-contain p-2"
+            alt={`${title} — купить в SPORTCORE Бишкек`}
+            className="w-full h-full object-contain p-3 transition-transform duration-500 group-hover:scale-105"
             loading="lazy"
             onError={() => {
               setImgSrc(PLACEHOLDER)
@@ -81,15 +79,21 @@ export default function ProductCard({
             }}
           />
         )}
+
+        {/* Hover-оверлей "Смотреть товар" */}
+        <div className="absolute inset-x-0 bottom-0 bg-[#1a1f4b] text-white text-xs font-bold py-2.5 text-center translate-y-full group-hover:translate-y-0 transition-transform duration-300 tracking-wide">
+          Смотреть товар →
+        </div>
       </div>
 
-      {/* Text */}
-      <div className="px-4 pb-4 text-center">
-        <h3 className="font-medium mb-2 text-[#1a1f4b] group-hover:text-black transition-colors line-clamp-2 text-sm sm:text-base">
+      {/* Текст */}
+      <div className="px-4 pt-3 pb-4">
+        <h3 className="font-semibold text-gray-800 group-hover:text-[#1a1f4b] transition-colors line-clamp-2 text-sm sm:text-[15px] leading-snug mb-2.5">
           {title}
         </h3>
-        <p className="font-bold text-[#1a1f4b] group-hover:text-black transition-colors text-base sm:text-lg">
-          {price.toLocaleString()} сом
+        <p className="font-black text-[#1a1f4b] text-base sm:text-lg leading-none">
+          {price.toLocaleString()}{' '}
+          <span className="text-xs font-medium text-gray-400">сом</span>
         </p>
       </div>
     </Link>

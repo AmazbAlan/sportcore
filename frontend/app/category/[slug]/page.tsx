@@ -87,13 +87,16 @@ export default async function CategoryPage({ params, searchParams }: Props) {
 
         <h1 className="text-3xl font-bold text-[#1f2937] mb-8">{categoryName}</h1>
 
-        <div className="grid grid-cols-1 md:grid-cols-[260px_1fr] gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-[260px_1fr] gap-4 md:gap-8">
           <CategoryFilter categorySlug={slug} />
           <div>
             {products.length === 0 ? (
-              <p className="text-gray-500">Товары в этой категории пока отсутствуют.</p>
+              <div className="text-center py-16">
+                <p className="text-gray-400 text-lg mb-4">Товары не найдены</p>
+                <a href={`/category/${slug}`} className="text-sm text-[#1a1f4b] underline">Сбросить фильтры</a>
+              </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
                 {products.map((p) => (
                   <ProductCard
                     key={p.id}

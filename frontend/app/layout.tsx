@@ -1,9 +1,16 @@
 import './globals.css'
+import { Inter } from 'next/font/google'
 import Header from './components/Header'
 import Footer from './components/Footer'
 import { CartProvider } from './context/CartContext'
 import ChatWidget from './components/ChatWidget'
 import type { Metadata } from 'next'
+
+const inter = Inter({
+  subsets: ['latin', 'cyrillic'],
+  display: 'swap',
+  variable: '--font-inter',
+})
 
 const BASE_URL = 'https://sportcore.kg'
 
@@ -130,9 +137,10 @@ const websiteSchema = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ru">
+    <html lang="ru" className={inter.variable}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://res.cloudinary.com" />
         <script
           type="application/ld+json"

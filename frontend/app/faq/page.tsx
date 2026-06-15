@@ -88,8 +88,8 @@ export default function FaqPage() {
               key={idx}
               className="group rounded-2xl border border-gray-200 bg-white shadow-sm open:shadow-md transition"
             >
-              <summary className="list-none cursor-pointer select-none px-5 py-4 flex items-center justify-between">
-                <span className="font-medium text-lg">{item.question}</span>
+              <summary className="list-none cursor-pointer select-none px-5 py-4 min-h-[56px] flex items-center justify-between gap-3">
+                <span className="font-semibold text-base sm:text-lg leading-snug">{item.question}</span>
                 <svg
                   className="h-5 w-5 transition-transform group-open:rotate-180"
                   viewBox="0 0 20 20"

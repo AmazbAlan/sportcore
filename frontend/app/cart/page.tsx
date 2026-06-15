@@ -94,7 +94,7 @@ export default function CartPage() {
                                 min={1}
                                 value={i.qty}
                                 onChange={(e) => update(i.id, Math.max(1, Number(e.target.value)))}
-                                className="h-9 w-20 rounded-lg border border-slate-300 px-3 text-center outline-none
+                                className="h-11 w-20 rounded-lg border border-slate-300 px-3 text-center outline-none
                                            focus:border-slate-400 focus:ring-4 focus:ring-slate-100"
                               />
                             </td>
@@ -106,7 +106,7 @@ export default function CartPage() {
                             <td className="px-6 py-5 text-right">
                               <button
                                 onClick={() => remove(i.id)}
-                                className="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition"
+                                className="inline-flex items-center justify-center h-11 w-11 rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition"
                                 aria-label="Удалить"
                                 title="Удалить"
                               >
@@ -141,7 +141,7 @@ export default function CartPage() {
 
                           <button
                             onClick={() => remove(i.id)}
-                            className="shrink-0 inline-flex items-center justify-center h-9 w-9 rounded-lg border border-red-200 bg-red-50 text-red-700"
+                            className="shrink-0 inline-flex items-center justify-center h-11 w-11 rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition"
                             aria-label="Удалить"
                           >
                             ×
@@ -169,7 +169,7 @@ export default function CartPage() {
                             min={1}
                             value={i.qty}
                             onChange={(e) => update(i.id, Math.max(1, Number(e.target.value)))}
-                            className="h-10 w-24 rounded-lg border border-slate-300 px-3 text-center outline-none"
+                            className="h-11 w-24 rounded-lg border border-slate-300 px-3 text-center outline-none"
                           />
                         </div>
                       </div>

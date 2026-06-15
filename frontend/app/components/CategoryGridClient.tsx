@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import 'swiper/css'
 
@@ -22,9 +23,17 @@ export default function CategoryGridClient({
   return (
     <section className="max-w-7xl mx-auto px-4 py-12">
 
-      <h2 className="text-2xl md:text-3xl font-bold text-[#1a1f4b] mb-6 md:mb-10">
-        Популярные категории
-      </h2>
+      <div className="flex items-center justify-between mb-6 md:mb-10">
+        <h2 className="text-2xl md:text-3xl font-black text-[#1a1f4b] tracking-tight">
+          Популярные категории
+        </h2>
+        <Link href="/category" className="text-sm font-bold text-[#1a1f4b] hover:text-yellow-500 transition-colors flex items-center gap-1">
+          Все категории
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </Link>
+      </div>
 
       {/* 📱 MOBILE */}
       <div className="block md:hidden">

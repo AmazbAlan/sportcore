@@ -11,7 +11,7 @@ export default function HeroBanner() {
       {/* Фон */}
       <Image
         src="/banner2.png"
-        alt="Sportcore"
+        alt="SPORTCORE — спортивный магазин в Бишкеке, Кыргызстан. Одежда, обувь, инвентарь для спорта и фитнеса"
         fill
         priority
         className="object-cover scale-110"
@@ -33,12 +33,12 @@ export default function HeroBanner() {
 
           {/* Заголовок */}
           <h1 className="
-            text-4xl 
-            sm:text-6xl 
-            md:text-7xl 
-            font-extrabold 
-            leading-[1.05] 
-            tracking-tight 
+            text-[2rem]
+            sm:text-5xl
+            md:text-7xl
+            font-extrabold
+            leading-[1.08]
+            tracking-tight
             text-white
           ">
             <span className="block mb-3">
@@ -55,40 +55,30 @@ export default function HeroBanner() {
           </h1>
 
           {/* Подзаголовок */}
-          <p className="
-            mt-7 
-            text-base 
-            sm:text-lg 
-            text-white/80 
-            max-w-md 
-            leading-relaxed
-          ">
-            Качественные товары для тренировок и активного образа жизни
+          <p className="mt-6 text-base sm:text-lg text-white/75 max-w-sm leading-relaxed">
+            Одежда, обувь и инвентарь для спорта и фитнеса. Доставка по всему Кыргызстану.
           </p>
 
           {/* Кнопки */}
-          <div className="mt-10 flex flex-col sm:flex-row gap-4 items-start">
-
-              <Link
-                href="/category"
-                className="
-                  inline-block
-                  bg-yellow-400 
-                  text-[#1a1f4b] 
-                  px-8 py-4 
-                  rounded-xl 
-                  font-semibold 
-                  text-base
-                  hover:bg-yellow-300 
-                  transition 
-                  hover:scale-105
-                  shadow-xl
-                "
-              >
-                Перейти в каталог
-              </Link>
-
-            </div>
+          <div className="mt-8 flex flex-wrap gap-3 items-center">
+            <Link
+              href="/category"
+              className="inline-flex items-center gap-2 bg-yellow-400 text-[#1a1f4b] px-7 py-3.5 rounded-xl font-bold text-sm sm:text-base hover:bg-yellow-300 transition-all hover:scale-105 shadow-xl"
+            >
+              Перейти в каталог
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+            <a
+              href="https://api.whatsapp.com/send?phone=+996774231202&text=Здравствуйте%2C%20я%20пишу%20с%20сайта"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 bg-white/10 border border-white/25 text-white px-7 py-3.5 rounded-xl font-bold text-sm sm:text-base hover:bg-white/20 transition-all"
+            >
+              Связаться с нами
+            </a>
+          </div>
 
         </motion.div>
 

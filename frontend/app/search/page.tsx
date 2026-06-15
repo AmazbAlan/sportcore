@@ -16,17 +16,18 @@ export async function generateMetadata({ searchParams }: SearchPageProps): Promi
 
   if (!query) {
     return {
-      title: 'Поиск товаров — SPORTCORE | Спорткор | Спорт кор',
-      description:
-        'Введите поисковый запрос, чтобы найти товары в магазине SPORTCORE | Спорткор | Спорт кор.',
+      title: 'Поиск товаров — SPORTCORE Бишкек',
+      description: 'Введите поисковый запрос, чтобы найти товары в магазине SPORTCORE.',
+      robots: { index: false, follow: false },
     }
   }
 
   return {
-    title: `Поиск: «${query}» — SPORTCORE | Спорткор | Спорт кор`,
-    description: `Результаты поиска по запросу «${query}». Найдите нужные товары в интернет-магазине SPORTCORE | Спорткор | Спорт кор.`,
+    title: `Поиск: «${query}» — SPORTCORE Бишкек`,
+    description: `Результаты поиска по запросу «${query}» в магазине спортивных товаров SPORTCORE, Бишкек.`,
+    robots: { index: false, follow: false },
     openGraph: {
-      title: `Поиск: «${query}» — SPORTCORE | Спорткор | Спорт кор`,
+      title: `Поиск: «${query}» — SPORTCORE`,
       description: `Результаты поиска по запросу «${query}».`,
     },
   }
@@ -69,35 +70,38 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           </p>
 
           <Link
-            href="/catalog"
-            className="mt-6 px-6 py-3 bg-yellow-500 text-white rounded-xl font-medium
-                       hover:brightness-95 transition"
+            href="/category"
+            className="mt-6 px-6 py-3 bg-yellow-400 text-[#1a1f4b] rounded-xl font-semibold
+                       hover:bg-yellow-300 transition"
           >
             Перейти в каталог
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
           {products.map((prod) => (
             <Link
               key={prod.id}
               href={`/product/${prod.slug}`}
-              className="border rounded-lg overflow-hidden hover:shadow-lg transition bg-white"
+              className="group block bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
             >
-              <div className="relative h-48 w-full bg-gray-50">
+              <div className="relative h-40 sm:h-48 w-full bg-gray-50 overflow-hidden">
                 <Image
                   src={prod.imageUrl && prod.imageUrl.length > 5 ? prod.imageUrl : '/placeholder.png'}
-                  alt={prod.title}
+                  alt={`${prod.title} — купить в SPORTCORE Бишкек`}
                   fill
-                  className="object-cover"
-                  priority
+                  className="object-contain p-2 transition-transform duration-500 group-hover:scale-105"
+                  loading="lazy"
                 />
               </div>
 
-              <div className="p-4">
-                <h2 className="font-medium text-gray-900 line-clamp-2">{prod.title}</h2>
-                <p className="mt-2 font-bold text-gray-900">
-                  {Number(prod.price).toLocaleString()} сом
+              <div className="p-3 sm:p-4">
+                <h2 className="font-semibold text-gray-800 text-sm sm:text-base line-clamp-2 leading-snug mb-2">
+                  {prod.title}
+                </h2>
+                <p className="font-black text-[#1a1f4b] text-base">
+                  {Number(prod.price).toLocaleString()}{' '}
+                  <span className="text-xs font-medium text-gray-400">сом</span>
                 </p>
               </div>
             </Link>

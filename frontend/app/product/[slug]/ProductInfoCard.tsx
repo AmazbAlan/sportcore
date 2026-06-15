@@ -47,14 +47,12 @@ export default function ProductInfoCard({ product }: { product: Product }) {
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-      {/* Фото — обычный img, чтобы не падать на битых URL и доменах не в next.config */}
-      <div className="bg-slate-50 p-6">
-        <div className="relative aspect-square w-full rounded-2xl bg-white border border-slate-200 overflow-hidden flex items-center justify-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
+      <div className="bg-slate-50 p-4 sm:p-6">
+        <div className="relative w-full rounded-2xl bg-white border border-slate-200 overflow-hidden flex items-center justify-center" style={{ aspectRatio: '1/1', maxHeight: '420px' }}>
           <img
             src={mainImageSrc}
-            alt={product.title || 'Товар'}
-            className="w-full h-full object-contain p-4"
+            alt={`${product.title || 'Товар'} — купить в SPORTCORE Бишкек`}
+            className="w-full h-full object-contain p-3 sm:p-4 transition-transform duration-500 hover:scale-105"
             loading="eager"
             onError={() => setImgError(true)}
           />

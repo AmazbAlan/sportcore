@@ -135,29 +135,70 @@ export default async function ProductPage({ params }: Props) {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
-      <main className="container mx-auto px-4 py-8">
-        <nav aria-label="Хлебные крошки" className="text-sm text-gray-500 mb-6 flex gap-1 items-center flex-wrap">
-          <a href="/" className="hover:text-gray-700">Главная</a>
-          <span>/</span>
-          <a href="/category" className="hover:text-gray-700">Каталог</a>
+      <main className="max-w-7xl mx-auto px-4 py-8">
+
+        {/* Хлебные крошки */}
+        <nav aria-label="Хлебные крошки" className="text-xs text-gray-400 mb-6 flex gap-1.5 items-center flex-wrap">
+          <a href="/" className="hover:text-[#1a1f4b] transition-colors">Главная</a>
+          <span className="text-gray-300">/</span>
+          <a href="/category" className="hover:text-[#1a1f4b] transition-colors">Каталог</a>
           {product.categorySlug && (
             <>
-              <span>/</span>
-              <a href={`/category/${product.categorySlug}`} className="hover:text-gray-700">{categoryName}</a>
+              <span className="text-gray-300">/</span>
+              <a href={`/category/${product.categorySlug}`} className="hover:text-[#1a1f4b] transition-colors">{categoryName}</a>
             </>
           )}
-          <span>/</span>
-          <span className="text-gray-800 line-clamp-1">{product.title}</span>
+          <span className="text-gray-300">/</span>
+          <span className="text-gray-600 line-clamp-1 max-w-[200px]">{product.title}</span>
         </nav>
 
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:gap-12">
+          {/* Фото + описание */}
           <ProductInfoCard product={product} />
-          <div className="flex flex-col space-y-4">
-            <h1 className="text-3xl font-bold text-[#1a1f4b]">{product.title}</h1>
-            <p className="text-2xl font-semibold text-gray-800">
-              {Number(product.price).toLocaleString()} сом
-            </p>
+
+          {/* Информация и покупка */}
+          <div className="flex flex-col gap-5 md:sticky md:top-24 md:self-start">
+            {/* Бейдж категории */}
+            {categoryName && (
+              <a
+                href={`/category/${product.categorySlug}`}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1a1f4b] bg-[#f0f2ff] px-3 py-1.5 rounded-full w-fit hover:bg-[#e0e4f8] transition-colors"
+              >
+                {categoryName}
+              </a>
+            )}
+
+            {/* Заголовок */}
+            <h1 className="text-2xl sm:text-3xl font-black text-[#1a1f4b] leading-snug">
+              {product.title}
+            </h1>
+
+            {/* Цена */}
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-black text-[#1a1f4b]">
+                {Number(product.price).toLocaleString()}
+              </span>
+              <span className="text-base font-medium text-gray-400">сом</span>
+            </div>
+
+            {/* Контролы корзины */}
             <CartControls product={product} />
+
+            {/* Доп. информация */}
+            <div className="flex flex-wrap gap-3 pt-1">
+              <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                <svg className="w-3.5 h-3.5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                Быстрая доставка по Бишкеку
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                <svg className="w-3.5 h-3.5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                Возврат за 14 дней
+              </div>
+            </div>
           </div>
         </div>
       </main>
