@@ -100,7 +100,24 @@ ${categoriesBlock}${slugWarning}
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
     generationConfig: {
       temperature: 0.2,
-      maxOutputTokens: 1024, // увеличили — JSON товара не должен обрезаться
+      maxOutputTokens: 2048,
+      // Gemini 2.5 Flash — модель с «мышлением»: оно тратит выходные токены ДО ответа
+      // и обрезает JSON (оставался только slug+category_slug). Отключаем — все токены идут в ответ.
+      thinkingConfig: { thinkingBudget: 0 },
+      // Принудительный структурированный JSON — без markdown и без обрывов на полуслове.
+      responseMimeType: 'application/json',
+      responseSchema: {
+        type: 'object',
+        properties: {
+          slug: { type: 'string' },
+          category_slug: { type: 'string' },
+          description: { type: 'string' },
+          seo_title: { type: 'string' },
+          seo_desc: { type: 'string' },
+          featured: { type: 'boolean' },
+        },
+        required: ['slug', 'category_slug', 'description', 'seo_title', 'seo_desc'],
+      },
     },
   }
 
